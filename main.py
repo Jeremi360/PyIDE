@@ -2,7 +2,7 @@
 
 # Had to install libgtksourceview-3.0-dev
 
-import gi, os, sys
+import gi, os, sys, subprocess, re
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 gi.require_version('GtkSource', '3.0')
@@ -11,6 +11,10 @@ from os import listdir
 from os.path import isfile, join
 
 wW = __import__('welcomeWindow')
+
+def isTextFile(fn):
+    msg = subprocess.Popen(["file", fn], stdout=subprocess.PIPE).communicate()[0]
+    return 'text' in str(msg)
 
 class IDEWindow(Gtk.Window):
     """docstring for IDEWindow."""
@@ -140,8 +144,12 @@ class IDEWindow(Gtk.Window):
 
             i = 0
             for item in files:
+                if item.startswith('.') or item.startswith('__') or '~' in item:
+                    continue
                 self.files.append(item)
                 if not os.path.isdir(item):
+                    if isTextFile(str(item)) == False: # Checking if file is text file
+                        continue
                     self.compilerOptions.append('')
                     self.openFile(self.projectPath + '/' + self.files[i]) # Until I create a working TreeView
                 i += 1

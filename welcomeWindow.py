@@ -2,7 +2,7 @@
 
 # Had to install libgtksourceview-3.0-dev
 
-import gi, os, sys
+import gi, os, sys, subprocess
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 gi.require_version('GtkSource', '3.0')
@@ -12,6 +12,7 @@ from os.path import isfile, join
 
 class WelcomeWindow(Gtk.Window):
     """docstring for WelcomeWindow."""
+
     def __init__(self):
         super(WelcomeWindow, self).__init__()
 
@@ -19,7 +20,7 @@ class WelcomeWindow(Gtk.Window):
 
         builder.add_from_file("WelcomeWindow.glade")
 
-        self = builder.get_object("wWindow")
+
 
         self.banner = builder.get_object("textview1")
         self.banner.modify_font(Pango.FontDescription.from_string("Ubuntu 26"))
@@ -33,12 +34,18 @@ class WelcomeWindow(Gtk.Window):
 
         self.banner.set_name("banner")
 
+        self.btnOP = builder.get_object("button1")
+        self.btnOP.connect('clicked', self.openProject)
+
+
+        self = builder.get_object("wWindow")
         self.hb = Gtk.HeaderBar()
         self.hb.set_show_close_button(True)
         self.hb.set_title("Py IDE")
 
         self.set_titlebar(self.hb)
-        self.set_default_size(800, 400)
+        self.set_size_request(800, 400)
+        self.set_resizable(False)
 
         self.styleProvider = Gtk.CssProvider()
 
@@ -61,3 +68,15 @@ class WelcomeWindow(Gtk.Window):
         self.show_all()
 
         Gtk.main()
+
+    def openProject(self, *args):
+        dialog = Gtk.FileChooserDialog('Select a project folder', self, Gtk.FileChooserAction.SELECT_FOLDER,(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            projectPath = dialog.get_filename()
+
+            os.execl(sys.executable, *([sys.executable]+sys.argv+[projectPath]))
+            sys.exit()
+
+        dialog.destroy()
