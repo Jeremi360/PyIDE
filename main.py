@@ -26,15 +26,25 @@ class IDEWindow(Gtk.Window):
         self.set_title('IDE')
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_default_size(800, 400)
+        self.set_border_width(10)
         self.connect('destroy', Gtk.main_quit)
+
+        ### Win Accels
+
+        accel = Gtk.AccelGroup()
+        accel.connect(Gdk.keyval_from_name('s'), Gdk.ModifierType.CONTROL_MASK, 0, self.saveFile)
+        self.add_accel_group(accel)
 
         ## Editor General
 
         self.projectPath = None
         self.projectName = None
         self.curFileName = None
+        self.curFileIndex = None
         self.curLanguage = None
         self.files = []
+        self.tempFilesText = []
+        self.langs = []
         self.compilerOptions = []
 
         ## Header Bar
@@ -46,6 +56,33 @@ class IDEWindow(Gtk.Window):
         self.compileBtn.set_tooltip_text('Compile + Run')
         self.compileBtn.connect('clicked', self.compile)
         self.compileBtn.set_sensitive(False)
+
+        ### Creating popup menu
+
+        self.menuBtn = Gtk.MenuButton()
+        self.mBBtn = Gtk.Button.new_from_icon_name('format-justify-fill', Gtk.IconSize.MENU)
+        self.menuBtn.add(self.mBBtn)
+
+        self.menu = Gtk.Menu()
+
+        self.menuItem1 = Gtk.MenuItem.new_with_label("New File")
+        self.menuItem2 = Gtk.MenuItem.new_with_label("New Folder")
+        self.menuItem3 = Gtk.SeparatorMenuItem()
+        self.menuItem4 = Gtk.MenuItem.new_with_label("Preferences")
+
+        self.menu.add(self.menuItem1)
+        self.menu.add(self.menuItem2)
+        self.menu.add(self.menuItem3)
+        self.menu.add(self.menuItem4)
+
+        self.menu.show_all()
+        self.menuBtn.set_popup(self.menu)
+
+        ###
+
+        self.menuBtn.set_tooltip_text('Menu')
+        #self.hb.pack_end(self.menuBtn)
+
         #self.folderBtn = Gtk.Button.new_from_icon_name('folder-new', Gtk.IconSize.MENU)
         #self.folderBtn.set_tooltip_text('Open Project Folder')
         #self.folderBtn.connect('clicked', self.openProject)
@@ -56,7 +93,7 @@ class IDEWindow(Gtk.Window):
 
         self.searchEntry = Gtk.Entry()
         self.searchEntry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, 'system-search')
-        self.hb.pack_end(self.searchEntry)
+        #self.hb.pack_end(self.searchEntry)
 
         ## Views And Buffers
 
@@ -82,11 +119,12 @@ class IDEWindow(Gtk.Window):
         self.pane = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
 
         self.sideView = Gtk.ListBox()
+        self.sideView.connect('row-selected', self.handleSideClick)
         self.sideScroller = Gtk.ScrolledWindow()
         self.sideScroller.add(self.sideView)
 
         self.sviewScroll.add(self.sview)
-        self.pane.add1(self.sideScroller)
+        self.pane.pack1(self.sideScroller, True, True)
         self.pane.add2(self.sviewScroll)
         self.add(self.pane)
         self.set_titlebar(self.hb)
@@ -96,6 +134,28 @@ class IDEWindow(Gtk.Window):
         self.openProject(openPath)
 
         Gtk.main()
+
+    def getCurrentText(self, *args):
+        return self.sbuff.get_text(self.sbuff.get_start_iter(), self.sbuff.get_end_iter(), False)
+
+    def saveOnChangeFile(self, *args):
+        self.tempFilesText[self.curFileIndex] = self.getCurrentText()
+        #print("Saved on change, {}".format(self.curFileIndex))
+
+    def handleSideClick(self, *args):
+        if type(self.curFileIndex) is int:
+            self.saveOnChangeFile()
+
+        row = self.sideView.get_selected_row()
+        selected = row.get_index()
+        #print(selected)
+        self.curFileIndex = selected
+        self.curFileName = self.files[selected]
+
+        if type(self.tempFilesText[self.curFileIndex]) is not str:
+            self.openFile(self.files[selected])
+        else:
+            self.openFileFromTemp()
 
     def openProject(self, __file=None, *args):
 
@@ -151,22 +211,45 @@ class IDEWindow(Gtk.Window):
                     if isTextFile(str(item)) == False: # Checking if file is text file
                         continue
                     self.compilerOptions.append('')
-                    self.openFile(self.projectPath + '/' + self.files[i]) # Until I create a working TreeView
+                    #self.openFile(self.projectPath + '/' + self.files[i]) # Until I create a working TreeView
                 i += 1
+
+            self.langs = None
+            self.langs = [None] * len(self.files)
+            #print(len(self.langs))
+
+            self.tempFilesText = None
+            self.tempFilesText = [None] * len(self.files)
+            #print(len(self.tempFilesText))
+
             self.buildTree(self)
 
             if len(self.compilerOptions) >= 1:
                 self.compileBtn.set_sensitive(True)
 
+    def openFileFromTemp(self, *args):
+        text = self.tempFilesText[self.curFileIndex]
+        self.sbuff.set_text(text)
+        self.sbuff.set_language(self.langs[self.curFileIndex])
+        self.hb.set_subtitle(self.files[self.curFileIndex])
+
     def openFile(self, filePath,*args):
         with open(filePath) as f:
             self.sbuff.set_text(f.read())
             lang = self.lmngr.guess_language(filePath)
+            self.langs[self.curFileIndex] = lang
             self.sbuff.set_language(lang)
             self.hb.set_subtitle(filePath)
 
     def saveFile(self, *args):
-        print('Finish this function')
+        if type(self.curFileIndex) is not int:
+            print('no files open')
+            return
+        _f = self.files[self.curFileIndex]
+        with open(_f, 'w') as f:
+            text = self.getCurrentText()
+            f.write(text)
+        print("Tried to save {}".format(_f))
 
     def buildTree(self, *args):
 
@@ -214,12 +297,12 @@ class IDEWindow(Gtk.Window):
 
         # Replace all 0 by curFile index
 
-        if self.compilerOptions[0] == None or self.compilerOptions[0] == '':
+        if self.compilerOptions[self.curFileIndex] == None or self.compilerOptions[self.curFileIndex] == '':
             en = self.entryDialog('Compiling command', 'Compiler')
             if en != None:
                 # print ("compile: {}".format(en))
-                bashCommand = en.replace('_localfile_', self.projectPath + '/' + self.files[0])
-                self.compilerOptions[0] = bashCommand
+                bashCommand = en.replace('_localfile_', self.projectPath + '/' + self.files[self.curFileIndex])
+                self.compilerOptions[self.curFileIndex] = bashCommand
                 import subprocess
                 process = subprocess.Popen(bashCommand, shell=True)
                 output, error = process.communicate()
@@ -227,7 +310,7 @@ class IDEWindow(Gtk.Window):
                 print(error)
         else:
             import subprocess
-            process = subprocess.Popen(self.compilerOptions[0], shell=True)
+            process = subprocess.Popen(self.compilerOptions[self.curFileIndex], shell=True)
             output, error = process.communicate()
             print(output)
             print(error)

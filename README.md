@@ -10,11 +10,19 @@ Right now it looks something like this:
 
 ## Features
 
-Nothing. This thing does nothing so far. Wait a couple of years then come back!
+Sort of works.
+
+* Basic syntax highlighting
+* Opening and saving files
 
 ## To-do
 
 Literally everything.
+
+Being developed right now:
+
+* Menu button featuring settings menu, new file and folder creation, manual syntax highlighting language setting, and more.
+* Real time external files/folders creation detection (update and add them to the Tree View)
 
 ## FAQ*
 
