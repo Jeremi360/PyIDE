@@ -2,7 +2,7 @@
 
 # Had to install libgtksourceview-3.0-dev
 
-import gi, os, sys, subprocess, re
+import gi, os, sys, subprocess, re, json
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 gi.require_version('GtkSource', '3.0')
@@ -33,6 +33,8 @@ class IDEWindow(Gtk.Window):
 
         accel = Gtk.AccelGroup()
         accel.connect(Gdk.keyval_from_name('s'), Gdk.ModifierType.CONTROL_MASK, 0, self.saveFile)
+        accel.connect(Gdk.keyval_from_name('b'), Gdk.ModifierType.CONTROL_MASK, 0, self.compile)
+        #accel.connect(Gdk.keyval_from_name('p'), Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, 0, self.command) #future Ctrl + Shift + P command popup
         self.add_accel_group(accel)
 
         ## Editor General
@@ -106,9 +108,14 @@ class IDEWindow(Gtk.Window):
         self.sview.set_auto_indent(True)
         self.sview.set_indent_on_tab(True)
         self.sview.set_tab_width(8)
-        self.sview.set_wrap_mode(Gtk.WrapMode.WORD)
         self.sview.set_pixels_above_lines(5)
-        self.sview.set_show_line_numbers(True)
+
+        ### Testing completion
+
+        self.sview_completion = self.sview.get_completion()
+        self.sview_provider = GtkSource.CompletionWords.new('Suggestion')
+        self.sview_provider.register(self.sbuff)
+        self.sview_completion.add_provider(self.sview_provider)
 
         ## TreeView
 
@@ -116,24 +123,102 @@ class IDEWindow(Gtk.Window):
         self.fileList = []
         self.fileStore = None # Turn this into a Gtk.ListStore (lists that TreeView can display)
 
+        hb = Gtk.HBox()
+        self.sideNewFileBtn = Gtk.Button.new_from_icon_name('document-new', Gtk.IconSize.MENU)
+        self.sideNewFolderBtn = Gtk.Button.new_from_icon_name('folder-new', Gtk.IconSize.MENU)
+        hb.pack_start(self.sideNewFileBtn, False, False, 0)
+        hb.pack_start(self.sideNewFolderBtn, False, False, 0)
+
         self.pane = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
+
+        self.sideVBox = Gtk.VBox()
+        self.sideVBox.pack_start(hb, False, False, 0)
 
         self.sideView = Gtk.ListBox()
         self.sideView.connect('row-selected', self.handleSideClick)
         self.sideScroller = Gtk.ScrolledWindow()
         self.sideScroller.add(self.sideView)
 
+        self.sideVBox.pack_start(self.sideScroller, True, True, 0)
+
         self.sviewScroll.add(self.sview)
-        self.pane.pack1(self.sideScroller, True, True)
+        self.pane.pack1(self.sideVBox, False, True)
         self.pane.add2(self.sviewScroll)
         self.add(self.pane)
         self.set_titlebar(self.hb)
+
+        self.loadSettings()
+
+        self.applyCSS()
 
         self.show_all()
 
         self.openProject(openPath)
 
         Gtk.main()
+
+    def loadSettings(self, *args):
+        
+        defaultSettings = {'highlight-matching-brackets': True,'show-line-numbers': True,'word-wrap': True, 'dark-mode': False}
+
+        curSettings = None
+
+        if os.path.exists('pyide-settings.json'):
+            with open('pyide-settings.json', 'r') as f:
+                curSettings = json.load(f)
+        else:
+            with open('pyide-settings.json', 'w+') as f:
+                json.dump(defaultSettings, f, indent=4, sort_keys=True, separators=(',', ':'))
+                curSettings = defaultSettings
+
+        self.highlightMatchingBrackets = curSettings['highlight-matching-brackets']
+        self.showLineNumbers = curSettings['show-line-numbers']
+        self.wordWrap = curSettings['word-wrap']
+        self.darkMode = curSettings['dark-mode']
+
+        self.applySettings()
+
+    def applySettings(self, *args):
+        self.sview.set_show_line_numbers(self.showLineNumbers)
+        self.sbuff.set_highlight_matching_brackets(self.highlightMatchingBrackets)
+
+        if self.wordWrap:
+            self.sview.set_wrap_mode(Gtk.WrapMode.WORD)
+
+
+    def applyCSS(self, *args):
+        self.styleProvider = Gtk.CssProvider()
+
+        def_css = """
+
+            GtkWindow {
+                background: white;
+            }
+
+        """
+
+        dark_css = """
+        
+            GtkWindow, GtkListBox, GtkListBoxRow, GtkTextView, GtkSourceView {
+                background: #232323;
+                color: whitesmoke
+            }
+
+            * {
+                border-color: #EEEEEE
+            }
+        
+        """
+
+        css = None
+
+        if self.darkMode:
+            css = dark_css
+        else:
+            css = def_css
+
+        self.styleProvider.load_from_data(bytes(css.encode()))
+        Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), self.styleProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
     def getCurrentText(self, *args):
         return self.sbuff.get_text(self.sbuff.get_start_iter(), self.sbuff.get_end_iter(), False)
@@ -143,6 +228,11 @@ class IDEWindow(Gtk.Window):
         #print("Saved on change, {}".format(self.curFileIndex))
 
     def handleSideClick(self, *args):
+        
+        if not isTextFile(self.files[self.sideView.get_selected_row().get_index()]):
+            print('Not text')
+            return
+
         if type(self.curFileIndex) is int:
             self.saveOnChangeFile()
 
@@ -274,7 +364,7 @@ class IDEWindow(Gtk.Window):
         # If user does not input text it returns None, NOT AN EMPTY STRING.
         dialogWindow = Gtk.MessageDialog(self,
                               Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
-                              Gtk.MessageType.QUESTION,
+                              Gtk.MessageType.INFO,
                               Gtk.ButtonsType.OK_CANCEL,
                               message)
 
@@ -296,6 +386,10 @@ class IDEWindow(Gtk.Window):
     def compile(self, *args):
 
         # Replace all 0 by curFile index
+
+        if type(self.curFileIndex) is not int: # if no file is open
+            print('No file selected')
+            return
 
         if self.compilerOptions[self.curFileIndex] == None or self.compilerOptions[self.curFileIndex] == '':
             en = self.entryDialog('Compiling command', 'Compiler')

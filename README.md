@@ -8,12 +8,36 @@ Right now it looks something like this:
 
 ![](ide-preview.png)
 
+## How to use
+
+As I said on the description, it only supports Linux and Mac, but as I don't have a Mac I'll only provide support for Linux.
+
+
+```bash
+  # To run it simply
+  ./main.py
+
+  # You can also provide a path like so
+  ./main.py /path/to/FOLDER
+```
+
+## Known Issues
+
+* Create a project doesn't work (I haven't created a function for it yet)
+* Buttons over Tree View don't work (I haven't created a function for it yet)
+* Doesn't alert you if you close the editor without saving a file
+* Tree View doesn't work properly with folders
+* Dark theme sucks
+
 ## Features
 
 Sort of works.
 
 * Basic syntax highlighting
 * Opening and saving files
+* Retarded code completion (based on what you've already typed)
+* Crappy "Compile and Run" (you'll see why)
+* Basic configuration (still doesn't have a configuration window, but you can still edit the settings from the file ```pyide-settings.json```)
 
 ## To-do
 
@@ -23,6 +47,8 @@ Being developed right now:
 
 * Menu button featuring settings menu, new file and folder creation, manual syntax highlighting language setting, and more.
 * Real time external files/folders creation detection (update and add them to the Tree View)
+* Tree View support for folders
+* Improve dark theme
 
 ## FAQ*
 
