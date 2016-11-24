@@ -6,7 +6,8 @@ import gi, os, sys, subprocess, re, json
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 gi.require_version('GtkSource', '3.0')
-from gi.repository import Gtk, Gdk,GtkSource
+gi.require_version('Vte', '2.91')
+from gi.repository import Gtk, Gdk,GtkSource, Vte, GLib
 from os import listdir
 from os.path import isfile, join
 
@@ -15,6 +16,10 @@ wW = __import__('welcomeWindow')
 def isTextFile(fn):
     msg = subprocess.Popen(["file", fn], stdout=subprocess.PIPE).communicate()[0]
     return 'text' in str(msg)
+
+def isImageFile(fn):
+    msg = subprocess.Popen(["file", fn], stdout=subprocess.PIPE).communicate()[0]
+    return 'image' in str(msg)
 
 class IDEWindow(Gtk.Window):
     """docstring for IDEWindow."""
@@ -59,6 +64,10 @@ class IDEWindow(Gtk.Window):
         self.compileBtn.connect('clicked', self.compile)
         self.compileBtn.set_sensitive(False)
 
+        self.terminalBtn = Gtk.Button.new_from_icon_name('utilities-terminal', Gtk.IconSize.MENU)
+        self.terminalBtn.set_tooltip_text('Toggle terminal')
+        self.terminalBtn.connect('clicked', self.toggleTerminal)
+
         ### Creating popup menu
 
         self.menuBtn = Gtk.MenuButton()
@@ -90,6 +99,7 @@ class IDEWindow(Gtk.Window):
         #self.folderBtn.connect('clicked', self.openProject)
         #self.hb.pack_start(self.folderBtn)
         self.hb.pack_start(self.compileBtn)
+        self.hb.pack_start(self.terminalBtn)
         self.hb.set_title('Py IDE')
         self.hb.set_show_close_button(True)
 
@@ -130,6 +140,9 @@ class IDEWindow(Gtk.Window):
         hb.pack_start(self.sideNewFolderBtn, False, False, 0)
 
         self.pane = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
+        self.terminalPane = Gtk.Paned.new(Gtk.Orientation.VERTICAL)
+
+        self.terminal = Vte.Terminal()
 
         self.sideVBox = Gtk.VBox()
         self.sideVBox.pack_start(hb, False, False, 0)
@@ -144,7 +157,11 @@ class IDEWindow(Gtk.Window):
         self.sviewScroll.add(self.sview)
         self.pane.pack1(self.sideVBox, False, True)
         self.pane.add2(self.sviewScroll)
-        self.add(self.pane)
+
+        self.terminalPane.pack1(self.pane, True, True)
+        self.terminalPane.add2(self.terminal)
+
+        self.add(self.terminalPane)
         self.set_titlebar(self.hb)
 
         self.loadSettings()
@@ -158,7 +175,7 @@ class IDEWindow(Gtk.Window):
         Gtk.main()
 
     def loadSettings(self, *args):
-        
+
         defaultSettings = {'highlight-matching-brackets': True,'show-line-numbers': True,'word-wrap': True, 'dark-mode': False}
 
         curSettings = None
@@ -198,7 +215,7 @@ class IDEWindow(Gtk.Window):
         """
 
         dark_css = """
-        
+
             GtkWindow, GtkListBox, GtkListBoxRow, GtkTextView, GtkSourceView {
                 background: #232323;
                 color: whitesmoke
@@ -207,7 +224,7 @@ class IDEWindow(Gtk.Window):
             * {
                 border-color: #EEEEEE
             }
-        
+
         """
 
         css = None
@@ -228,7 +245,11 @@ class IDEWindow(Gtk.Window):
         #print("Saved on change, {}".format(self.curFileIndex))
 
     def handleSideClick(self, *args):
-        
+
+        if isImageFile(self.files[self.sideView.get_selected_row().get_index()]):
+            os.system('xdg-open ' + self.files[self.sideView.get_selected_row().get_index()])
+            return
+
         if not isTextFile(self.files[self.sideView.get_selected_row().get_index()]):
             print('Not text')
             return
@@ -317,6 +338,19 @@ class IDEWindow(Gtk.Window):
             if len(self.compilerOptions) >= 1:
                 self.compileBtn.set_sensitive(True)
 
+            curShell = os.environ.get('SHELL')
+
+            self.terminal.spawn_sync(
+                    Vte.PtyFlags.DEFAULT, #default is fine
+                    self.projectPath, #where to start the command?
+                    [curShell], #where is the emulator?
+                    [], #it's ok to leave this list empty
+                    GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                    None, #at least None is required
+                    None,
+                    )
+            self.terminal.hide()
+
     def openFileFromTemp(self, *args):
         text = self.tempFilesText[self.curFileIndex]
         self.sbuff.set_text(text)
@@ -385,8 +419,6 @@ class IDEWindow(Gtk.Window):
 
     def compile(self, *args):
 
-        # Replace all 0 by curFile index
-
         if type(self.curFileIndex) is not int: # if no file is open
             print('No file selected')
             return
@@ -408,6 +440,12 @@ class IDEWindow(Gtk.Window):
             output, error = process.communicate()
             print(output)
             print(error)
+
+    def toggleTerminal(self, *args):
+        if self.terminal.props.visible:
+            self.terminal.hide()
+        else:
+            self.terminal.show()
 
 if len(sys.argv) == 1:
     w = wW.WelcomeWindow()
