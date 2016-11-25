@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 # Had to install libgtksourceview-3.0-dev
+# Will need pygit2 (python3-pygit2) for git integration
 
-import gi, os, sys, subprocess, re, json
+import gi, os, sys, subprocess, re, json, pygit2
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
 gi.require_version('GtkSource', '3.0')
@@ -10,6 +11,7 @@ gi.require_version('Vte', '2.91')
 from gi.repository import Gtk, Gdk,GtkSource, Vte, GLib
 from os import listdir
 from os.path import isfile, join
+from pygit2 import Repository
 
 wW = __import__('welcomeWindow')
 
@@ -31,7 +33,7 @@ class IDEWindow(Gtk.Window):
         self.set_title('IDE')
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_default_size(800, 400)
-        self.set_border_width(10)
+        #self.set_border_width(10)
         self.connect('destroy', Gtk.main_quit)
 
         ### Win Accels
@@ -140,7 +142,9 @@ class IDEWindow(Gtk.Window):
         hb.pack_start(self.sideNewFolderBtn, False, False, 0)
 
         self.pane = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
+        self.pane.set_wide_handle(True)
         self.terminalPane = Gtk.Paned.new(Gtk.Orientation.VERTICAL)
+        #self.terminalPane.set_wide_handle(True)
 
         self.terminal = Vte.Terminal()
 
@@ -151,6 +155,7 @@ class IDEWindow(Gtk.Window):
         self.sideView.connect('row-selected', self.handleSideClick)
         self.sideScroller = Gtk.ScrolledWindow()
         self.sideScroller.add(self.sideView)
+        self.sideScroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
         self.sideVBox.pack_start(self.sideScroller, True, True, 0)
 
@@ -350,6 +355,15 @@ class IDEWindow(Gtk.Window):
                     None,
                     )
             self.terminal.hide()
+
+            text = Repository(self.projectPath).head.shorthand
+            repo = Gtk.HBox(spacing=6)
+            img = Gtk.Image.new_from_file('resources/icons/git-branch.svg')
+            repo.pack_start(img, False, False, 0)
+            repo.pack_start(Gtk.Label(text), False, False, 0)
+            repo.show_all()
+
+            self.hb.pack_end(repo)
 
     def openFileFromTemp(self, *args):
         text = self.tempFilesText[self.curFileIndex]
