@@ -32,7 +32,7 @@ class IDEWindow(Gtk.Window):
 
         self.set_title('IDE')
         self.set_position(Gtk.WindowPosition.CENTER)
-        self.set_default_size(800, 400)
+        self.set_default_size(1000, 500)
         #self.set_border_width(10)
         self.connect('destroy', Gtk.main_quit)
 
@@ -51,6 +51,7 @@ class IDEWindow(Gtk.Window):
         self.curFileName = None
         self.curFileIndex = None
         self.curLanguage = None
+        self.curSettings = None
         self.files = []
         self.tempFilesText = []
         self.langs = []
@@ -142,7 +143,7 @@ class IDEWindow(Gtk.Window):
         hb.pack_start(self.sideNewFolderBtn, False, False, 0)
 
         self.pane = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
-        self.pane.set_wide_handle(True)
+        self.pane.set_wide_handle(False)
         self.terminalPane = Gtk.Paned.new(Gtk.Orientation.VERTICAL)
         #self.terminalPane.set_wide_handle(True)
 
@@ -193,6 +194,8 @@ class IDEWindow(Gtk.Window):
                 json.dump(defaultSettings, f, indent=4, sort_keys=True, separators=(',', ':'))
                 curSettings = defaultSettings
 
+        self.curSettings = curSettings
+
         self.highlightMatchingBrackets = curSettings['highlight-matching-brackets']
         self.showLineNumbers = curSettings['show-line-numbers']
         self.wordWrap = curSettings['word-wrap']
@@ -207,6 +210,8 @@ class IDEWindow(Gtk.Window):
         if self.wordWrap:
             self.sview.set_wrap_mode(Gtk.WrapMode.WORD)
 
+        self.applyCSS()
+
 
     def applyCSS(self, *args):
         self.styleProvider = Gtk.CssProvider()
@@ -217,17 +222,33 @@ class IDEWindow(Gtk.Window):
                 background: white;
             }
 
+            GtkWindow, GtkListBox, GtkListBoxRow, GtkTextView, GtkSourceView {
+                background: #FFFFFF;
+                color: #5C616C;
+            }
+
+            GtkSourceView {
+                padding: 10px;
+                margin: 10px;
+            }
+
+            GtkPaned {
+                border-color: #DCDFE3;
+                color: #5C616C;
+            }
+
         """
 
         dark_css = """
 
             GtkWindow, GtkListBox, GtkListBoxRow, GtkTextView, GtkSourceView {
-                background: #232323;
-                color: whitesmoke
+                background: #282C34;
+                color: #ABB2BF;
             }
 
-            * {
-                border-color: #EEEEEE
+            GtkPaned {
+                border-color: #181A1F;
+                color: #181A1F;
             }
 
         """
@@ -250,6 +271,10 @@ class IDEWindow(Gtk.Window):
         #print("Saved on change, {}".format(self.curFileIndex))
 
     def handleSideClick(self, *args):
+
+        # This corrects the "AttributeError: 'NoneType' object has no attribute 'get_index'" error on close
+        if self.sideView.get_selected_row() is None:
+            return
 
         if isImageFile(self.files[self.sideView.get_selected_row().get_index()]):
             os.system('xdg-open ' + self.files[self.sideView.get_selected_row().get_index()])
@@ -356,14 +381,20 @@ class IDEWindow(Gtk.Window):
                     )
             self.terminal.hide()
 
-            text = Repository(self.projectPath).head.shorthand
-            repo = Gtk.HBox(spacing=6)
-            img = Gtk.Image.new_from_file('resources/icons/git-branch.svg')
-            repo.pack_start(img, False, False, 0)
-            repo.pack_start(Gtk.Label(text), False, False, 0)
-            repo.show_all()
+            if os.path.isdir(self.projectPath + '/.git'):
+                text = Repository(self.projectPath).head.shorthand
+                repo = Gtk.HBox(spacing=6)
+                img = Gtk.Image.new_from_file('resources/icons/git-branch.svg')
+                repo.pack_start(img, False, False, 0)
+                repo.pack_start(Gtk.Label(text), False, False, 0)
+                repo.show_all()
 
-            self.hb.pack_end(repo)
+                btn = Gtk.Button()
+                btn.add(repo)
+                btn.show_all()
+                btn.set_tooltip_text("On branch " + text)
+
+                self.hb.pack_end(btn)
 
     def openFileFromTemp(self, *args):
         text = self.tempFilesText[self.curFileIndex]
@@ -388,6 +419,15 @@ class IDEWindow(Gtk.Window):
             text = self.getCurrentText()
             f.write(text)
         print("Tried to save {}".format(_f))
+
+        curSettings = None
+
+        if os.path.exists('pyide-settings.json'):
+            with open('pyide-settings.json', 'r') as f:
+                curSettings = json.load(f)
+                #print(self.curSettings == curSettings)
+            if self.curSettings != curSettings:
+                self.loadSettings()
 
     def buildTree(self, *args):
 

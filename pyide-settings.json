@@ -1,5 +1,5 @@
 {
-    "dark-mode":false,
+    "dark-mode":true,
     "highlight-matching-brackets":true,
     "show-line-numbers":true,
     "word-wrap":true

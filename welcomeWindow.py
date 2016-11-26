@@ -37,6 +37,8 @@ class WelcomeWindow(Gtk.Window):
         self.btnOP = builder.get_object("button1")
         self.btnOP.connect('clicked', self.openProject)
 
+        self.btnCP = builder.get_object("button2")
+        self.btnCP.connect('clicked', self.createProject)
 
         self = builder.get_object("wWindow")
         self.hb = Gtk.HeaderBar()
@@ -75,6 +77,20 @@ class WelcomeWindow(Gtk.Window):
 
         if response == Gtk.ResponseType.OK:
             projectPath = dialog.get_filename()
+
+            os.execl(sys.executable, *([sys.executable]+sys.argv+[projectPath]))
+            sys.exit()
+
+        dialog.destroy()
+
+    def createProject(self, *args):
+        dialog = Gtk.FileChooserDialog('Create a folder for the project', self, Gtk.FileChooserAction.CREATE_FOLDER,(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_SAVE, Gtk.ResponseType.OK))
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            projectPath = dialog.get_filename()
+
+            os.makedirs(projectPath)
 
             os.execl(sys.executable, *([sys.executable]+sys.argv+[projectPath]))
             sys.exit()
