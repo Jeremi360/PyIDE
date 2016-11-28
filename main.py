@@ -350,7 +350,7 @@ class IDEWindow(Gtk.Window):
                 if item.startswith('.') or item.startswith('__') or '~' in item:
                     continue
                 self.files.append(item)
-                if not os.path.isdir(item):
+                if not os.path.isdir(self.projectPath + '/' + item):
                     if isTextFile(str(item)) == False: # Checking if file is text file
                         continue
                     self.compilerOptions.append('')
@@ -435,7 +435,7 @@ class IDEWindow(Gtk.Window):
 
         for item in self.files:
             a = Gtk.Label(item)
-            if os.path.isdir(item):
+            if os.path.isdir(self.projectPath + '/' + item):
                 i = Gtk.Image.new_from_icon_name('folder', Gtk.IconSize.MENU) # change this for recursive function
             else:
                 i = Gtk.Image.new_from_icon_name('text-x-script', Gtk.IconSize.MENU)
