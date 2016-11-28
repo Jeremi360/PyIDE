@@ -17,7 +17,7 @@ wW = __import__('welcomeWindow')
 
 def isTextFile(fn):
     msg = subprocess.Popen(["file", fn], stdout=subprocess.PIPE).communicate()[0]
-    return 'text' in str(msg)
+    return 'text' in str(msg) or 'source' in str(msg)
 
 def isImageFile(fn):
     msg = subprocess.Popen(["file", fn], stdout=subprocess.PIPE).communicate()[0]
@@ -153,6 +153,8 @@ class IDEWindow(Gtk.Window):
         self.sideVBox.pack_start(hb, False, False, 0)
 
         self.sideView = Gtk.ListBox()
+        self.sideView.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        self.sideView.set_activate_on_single_click(True)
         self.sideView.connect('row-selected', self.handleSideClick)
         self.sideScroller = Gtk.ScrolledWindow()
         self.sideScroller.add(self.sideView)
@@ -276,11 +278,11 @@ class IDEWindow(Gtk.Window):
         if self.sideView.get_selected_row() is None:
             return
 
-        if isImageFile(self.files[self.sideView.get_selected_row().get_index()]):
-            os.system('xdg-open ' + self.files[self.sideView.get_selected_row().get_index()])
+        if isImageFile(self.projectPath + '/' + self.files[self.sideView.get_selected_row().get_index()]):
+            os.system('xdg-open ' + self.projectPath + '/' + self.files[self.sideView.get_selected_row().get_index()])
             return
 
-        if not isTextFile(self.files[self.sideView.get_selected_row().get_index()]):
+        if not isTextFile(self.projectPath + '/' + self.files[self.sideView.get_selected_row().get_index()]):
             print('Not text')
             return
 
@@ -294,7 +296,7 @@ class IDEWindow(Gtk.Window):
         self.curFileName = self.files[selected]
 
         if type(self.tempFilesText[self.curFileIndex]) is not str:
-            self.openFile(self.files[selected])
+            self.openFile(self.projectPath + '/' + self.files[selected])
         else:
             self.openFileFromTemp()
 
@@ -400,7 +402,7 @@ class IDEWindow(Gtk.Window):
         text = self.tempFilesText[self.curFileIndex]
         self.sbuff.set_text(text)
         self.sbuff.set_language(self.langs[self.curFileIndex])
-        self.hb.set_subtitle(self.files[self.curFileIndex])
+        self.hb.set_subtitle(self.projectPath + '/' + self.files[self.curFileIndex])
 
     def openFile(self, filePath,*args):
         with open(filePath) as f:
@@ -414,7 +416,7 @@ class IDEWindow(Gtk.Window):
         if type(self.curFileIndex) is not int:
             print('no files open')
             return
-        _f = self.files[self.curFileIndex]
+        _f = self.projectPath + '/' + self.files[self.curFileIndex]
         with open(_f, 'w') as f:
             text = self.getCurrentText()
             f.write(text)
