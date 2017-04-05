@@ -6,7 +6,7 @@ __Status:__ Barely works as a code editor :(
 
 Right now it looks something like this:
 
-![](ide-preview-themes.png)
+![](ide-preview.png)
 
 ## How to use
 
@@ -20,13 +20,13 @@ Running the IDE:
 
 ```bash
   # To run it simply
-  ./main.py
+  python3 main.py
 
   # You can also provide a path like so
-  ./main.py /path/to/FOLDER
+  python3 main.py /path/to/FOLDER
 ```
 
-There is also a compiled double-click launcher file named ```PyIDE```, but it doesn't support args (the project path), yet.
+\*Quick launcher removed
 
 ## Features
 
@@ -36,7 +36,7 @@ Sort of works.
 * Opening and saving files
 * Retarded code completion (based on what you've already typed)
 * Crappy "Compile and Run" (you'll see why)
-* Basic update on-the-go configuration (still doesn't have a configuration window, but you can still edit the settings from the file ```pyide-settings.json```)
+* Basic update on-the-go settings (still doesn't have a settings window, but you can do some stuff with the settings button)
 
 ## To-do
 
@@ -51,10 +51,16 @@ A lot. Check out what is being developed right now:
 * Native image support
 * Markdown preview
 
+## Recent Updates
+
+* Started working on Markdown preview
+* Layout changes
+* Settings button
+
 ## Known Issues
 
 * Create a project is broken (totally)
-* Buttons above Tree View don't work (I haven't created a function for it yet)
+* Buttons bellow Tree View don't work (I haven't created a function for them yet)
 * Doesn't alert you if you close the editor without saving a file
 * Tree View doesn't do anything with folders yet
 
