@@ -1,0 +1,51 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+Compiler	../compiler.py	/^class Compiler:$/;"	kind:class	line:81
+IDEWindow	../main.py	/^class IDEWindow(Gtk.Window):$/;"	kind:class	line:25
+ProjectSettingsWindow	../compiler.py	/^class ProjectSettingsWindow(Gtk.Window):$/;"	kind:class	line:5
+WelcomeWindow	../welcomeWindow.py	/^class WelcomeWindow(Gtk.Window):$/;"	kind:class	line:13
+__init__	../compiler.py	/^    def __init__(self, parent):$/;"	kind:member	line:6
+__init__	../compiler.py	/^    def __init__(self, parent, path):$/;"	kind:member	line:83
+__init__	../main.py	/^    def __init__(self, openPath):$/;"	kind:member	line:27
+__init__	../welcomeWindow.py	/^    def __init__(self):$/;"	kind:member	line:16
+__init__.py	../__init__.py	1;"	kind:file	line:1
+_quit	../compiler.py	/^    def _quit(self, *args):$/;"	kind:member	line:78
+a	../main.py	/^    a = IDEWindow(sys.argv[1])$/;"	kind:variable	line:713
+applyCSS	../main.py	/^    def applyCSS(self, *args):$/;"	kind:member	line:387
+applySettings	../main.py	/^    def applySettings(self, *args):$/;"	kind:member	line:369
+bracketComplete	../main.py	/^    def bracketComplete(self, *args):$/;"	kind:member	line:343
+buildInterface	../compiler.py	/^    def buildInterface(self, *args):$/;"	kind:member	line:19
+buildTree	../main.py	/^    def buildTree(self, *args):$/;"	kind:member	line:621
+compile	../compiler.py	/^    def compile(self, *args):$/;"	kind:member	line:91
+compile	../main.py	/^    def compile(self, *args):$/;"	kind:member	line:663
+compiler.py	../compiler.py	1;"	kind:file	line:1
+createProject	../welcomeWindow.py	/^    def createProject(self, *args):$/;"	kind:member	line:86
+entryDialog	../main.py	/^    def entryDialog(self, message, title=''):$/;"	kind:member	line:639
+getCurrentText	../main.py	/^    def getCurrentText(self, *args):$/;"	kind:member	line:437
+handleSideClick	../main.py	/^    def handleSideClick(self, *args):$/;"	kind:member	line:444
+isImageFile	../main.py	/^def isImageFile(fn):$/;"	kind:function	line:21
+isTextFile	../main.py	/^def isTextFile(fn):$/;"	kind:function	line:17
+loadSettings	../main.py	/^    def loadSettings(self, *args):$/;"	kind:member	line:346
+main.py	../main.py	1;"	kind:file	line:1
+onLinesCliked	../main.py	/^    def onLinesCliked(self, *args):$/;"	kind:member	line:292
+onSettingsBtnClick	../main.py	/^    def onSettingsBtnClick(self, *args):$/;"	kind:member	line:340
+onTextChanged	../main.py	/^    def onTextChanged(self, *args):$/;"	kind:member	line:315
+onTextInsert	../main.py	/^    def onTextInsert(self, buff, location, text, len):$/;"	kind:member	line:330
+onToggleDark	../main.py	/^    def onToggleDark(self, *args):$/;"	kind:member	line:285
+onToggleHighlight	../main.py	/^    def onToggleHighlight(self, *args):$/;"	kind:member	line:307
+onToggleLine	../main.py	/^    def onToggleLine(self, *args):$/;"	kind:member	line:299
+openFile	../main.py	/^    def openFile(self, filePath,*args):$/;"	kind:member	line:585
+openFileFromTemp	../main.py	/^    def openFileFromTemp(self, *args):$/;"	kind:member	line:572
+openProject	../main.py	/^    def openProject(self, __file=None, *args):$/;"	kind:member	line:474
+openProject	../welcomeWindow.py	/^    def openProject(self, *args):$/;"	kind:member	line:74
+saveFile	../main.py	/^    def saveFile(self, *args):$/;"	kind:member	line:602
+saveOnChangeFile	../main.py	/^    def saveOnChangeFile(self, *args):$/;"	kind:member	line:440
+saveSettings	../main.py	/^    def saveSettings(self, *args):$/;"	kind:member	line:296
+toggleTerminal	../main.py	/^    def toggleTerminal(self, *args):$/;"	kind:member	line:334
+w	../main.py	/^    w = wW.WelcomeWindow()$/;"	kind:variable	line:711
+wW	../main.py	/^wW = __import__('welcomeWindow')$/;"	kind:variable	line:15
+welcomeWindow.py	../welcomeWindow.py	1;"	kind:file	line:1

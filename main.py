@@ -33,7 +33,7 @@ class IDEWindow(Gtk.Window):
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_default_size(1000, 500)
         # i = Gtk.Image.new_from_icon_name('document-edit-symbolic', Gtk.IconSize.MENU)
-        # self.set_default_icon(i.get_pixbuf())
+        self.set_default_icon_name('document-edit-symbolic')
         #self.set_border_width(10)
         self.connect('destroy', Gtk.main_quit)
 
@@ -63,7 +63,7 @@ class IDEWindow(Gtk.Window):
         self.runningProccess = None
 
         self.waitingForBracketCompletion = False
-
+        self.autoToggling = False
         ## Header Bar
 
         self.hb = Gtk.HeaderBar()
@@ -91,6 +91,7 @@ class IDEWindow(Gtk.Window):
         a = Gtk.CheckButton()
         a.set_label('Toggle Dark Mode')
         self.toggleDarkCheck = a
+        self.toggleDarkCheck.connect('toggled', self.onToggleDark)
         r.add(a)
         r.set_margin_left(5)
         r.set_margin_right(5)
@@ -281,6 +282,13 @@ class IDEWindow(Gtk.Window):
 
         Gtk.main()
 
+    def onToggleDark(self, *args):
+        if self.autoToggling:
+            return
+        self.darkMode = not self.darkMode
+        self.saveSettings()
+        self.applySettings()
+
     def onLinesCliked(self, *args):
         ##
         self.linesPopover.show_all()
@@ -290,12 +298,16 @@ class IDEWindow(Gtk.Window):
 
     def onToggleLine(self, *args):
         ##
+        if self.autoToggling:
+            return
         self.showLineNumbers = self.toggleLineCheck.get_active()
         self.saveSettings()
         self.applySettings()
 
     def onToggleHighlight(self, *args):
         ##
+        if self.autoToggling:
+            return
         self.highlightMatchingBrackets = self.toggleHighlightCheck.get_active()
         self.saveSettings()
         self.applySettings()
@@ -356,14 +368,20 @@ class IDEWindow(Gtk.Window):
 
     def applySettings(self, *args):
         self.sview.set_show_line_numbers(self.showLineNumbers)
-        self.toggleLineCheck.set_active(self.showLineNumbers)
         self.sbuff.set_highlight_matching_brackets(self.highlightMatchingBrackets)
-        self.toggleHighlightCheck.set_active(self.highlightMatchingBrackets)
 
         if self.wordWrap:
             self.sview.set_wrap_mode(Gtk.WrapMode.WORD)
 
-        self.applyCSS()
+        Gtk.Settings.get_default().set_property('gtk-application-prefer-dark-theme', self.darkMode)
+
+        self.autoToggling = True
+
+        self.toggleDarkCheck.set_active(self.darkMode)
+        self.toggleHighlightCheck.set_active(self.highlightMatchingBrackets)
+        self.toggleLineCheck.set_active(self.showLineNumbers)
+
+        self.autoToggling = False        
 
 
     def applyCSS(self, *args):
@@ -559,7 +577,7 @@ class IDEWindow(Gtk.Window):
 
         if self.sbuff.get_language().get_name().lower() == "markdown":
             self.sviewPaned.get_child2().show()
-            self.mdPreviewer.load_uri('file://' + os.path.dirname(__file__) + '/browser/index.html')
+            self.mdPreviewer.load_uri('file://' + os.path.dirname(os.path.abspath(__file__)) + '/browser/index.html')
             self.mdPreviewer.execute_script('writeMd(\'' + re.escape(text) + '\');')
         else:
             self.sviewPaned.get_child2().hide()
@@ -644,45 +662,50 @@ class IDEWindow(Gtk.Window):
 
     def compile(self, *args):
 
-        if self.running:
-            ##
-            pid = self.runningProccess.pid
-            for process in psutil.process_iter():
-            	if process.cmdline == self.compilerOptions[self.curFileIndex]:
-            		process.terminate()
-            		print('Found')
-            		break
-            self.running = False
-            self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.MENU))
+        # if self.running:
+        #     ##
+        #     pid = self.runningProccess.pid
+        #     for process in psutil.process_iter():
+        #     	if process.cmdline == self.compilerOptions[self.curFileIndex]:
+        #     		process.terminate()
+        #     		print('Found')
+        #     		break
+        #     self.running = False
+        #     self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.MENU))
 
-        else:
-            if type(self.curFileIndex) is not int: # if no file is open
-                print('No file selected')
-                return
+        # else:
+        #     if type(self.curFileIndex) is not int: # if no file is open
+        #         print('No file selected')
+        #         return
 
-            if self.compilerOptions[self.curFileIndex] == None or self.compilerOptions[self.curFileIndex] == '':
-                en = self.entryDialog('Compiling command', 'Compiler')
-                if en != None:
-                    # print ("compile: {}".format(en))
-                    bashCommand = en.replace('_localfile_', self.projectPath + '/' + self.files[self.curFileIndex])
-                    self.compilerOptions[self.curFileIndex] = bashCommand
-                    import subprocess
-                    self.runningProccess = subprocess.Popen(bashCommand + " &", shell=True, preexec_fn=os.setsid)
-                    self.running = True
-                    self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-stop-symbolic', Gtk.IconSize.MENU))
-                    self.compileBtn.show_all()
-                    output, error = self.runningProccess.communicate()
-                    print(output)
-                    print(error)
-            else:
-                import subprocess
-                self.runningProccess = subprocess.Popen(self.compilerOptions[self.curFileIndex] + " &", shell=True, preexec_fn=os.setsid)
-                self.running = True
-                self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-stop-symbolic', Gtk.IconSize.MENU))
-                self.compileBtn.show_all()
-                output, error = self.runningProccess.communicate()
-                print(output)
-                print(error)
+        #     if self.compilerOptions[self.curFileIndex] == None or self.compilerOptions[self.curFileIndex] == '':
+        #         en = self.entryDialog('Compiling command', 'Compiler')
+        #         if en != None:
+        #             # print ("compile: {}".format(en))
+        #             bashCommand = en.replace('_localfile_', self.projectPath + '/' + self.files[self.curFileIndex])
+        #             self.compilerOptions[self.curFileIndex] = bashCommand
+        #             import subprocess
+        #             self.runningProccess = subprocess.Popen(bashCommand + " &", shell=True, preexec_fn=os.setsid)
+        #             self.running = True
+        #             self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-stop-symbolic', Gtk.IconSize.MENU))
+        #             self.compileBtn.show_all()
+        #             output, error = self.runningProccess.communicate()
+        #             print(output)
+        #             print(error)
+        #     else:
+        #         import subprocess
+        #         self.runningProccess = subprocess.Popen(self.compilerOptions[self.curFileIndex] + " &", shell=True, preexec_fn=os.setsid)
+        #         self.running = True
+        #         self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-stop-symbolic', Gtk.IconSize.MENU))
+        #         self.compileBtn.show_all()
+        #         output, error = self.runningProccess.communicate()
+        #         print(output)
+        #         print(error)
+
+        from compiler import Compiler
+
+        comp = Compiler(self, self.projectPath)
+        comp.compile()
 
 if len(sys.argv) == 1:
     w = wW.WelcomeWindow()
