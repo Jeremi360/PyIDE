@@ -3,11 +3,13 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
 class ProjectSettingsWindow(Gtk.Window):
-    def __init__(self, parent):
+    def __init__(self, parent, btn, entry):
 
         super(ProjectSettingsWindow, self).__init__()
 
         self.parent = parent
+        self.compileBtn = btn
+        self.stateEntry = entry
 
         self.set_default_size(400, 600)
         self.connect('destroy', self._quit)
@@ -76,16 +78,23 @@ class ProjectSettingsWindow(Gtk.Window):
         self.add(_hb)
 
     def _quit(self, *args):
+        self.stateEntry.set_text('Finished')
+        self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.MENU))
         self.destroy()
 
 class Compiler:
 
-    def __init__(self, parent, path):
+    def __init__(self, parent, path, entry, btn):
 
         self.path = os.path.abspath(path) ## Currently working path
         self.settings = None
 
         self.parent = parent
+
+        self.compileBtn = btn
+        self.stateEntry = entry
+
+        self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-stop-symbolic', Gtk.IconSize.MENU))
 
 
     def compile(self, *args):
@@ -98,7 +107,7 @@ class Compiler:
 
         else:
 
-            p = ProjectSettingsWindow(self.parent)
+            p = ProjectSettingsWindow(self.parent, self.compileBtn, self.stateEntry)
 
             ## Create the file and then compile
             # pyideProject = json.JSONEncoder({
