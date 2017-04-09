@@ -1,6 +1,7 @@
 import os, sys, subprocess, re, json, psutil, gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+from time import sleep
 
 class ProjectSettingsWindow(Gtk.Window):
     def __init__(self, parent, btn, entry):
@@ -95,6 +96,9 @@ class Compiler:
         self.stateEntry = entry
 
         self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-stop-symbolic', Gtk.IconSize.MENU))
+        self.stateEntry.set_text('Build in progress...')        
+
+        self.p = None
 
 
     def compile(self, *args):
@@ -103,13 +107,28 @@ class Compiler:
 
             with open(os.path.join(self.path, '.pyide-project.json'), 'r') as f:
                 ## Do stuff
-                print('')
-
+                print('Found file')
+                project = json.load(f)
+                if os.path.exists(os.path.join(self.path, 'Makefile')):
+                    self.parent.openTerminal()
+                    with open(os.path.join(self.path, 'Makefile'), 'r') as f:
+                        command = f.readlines()
+                        for l in command:
+                            self.parent.terminal.feed_child(l, len(l))
+                    self._quit()
+                        
         else:
 
-            p = ProjectSettingsWindow(self.parent, self.compileBtn, self.stateEntry)
+            self.p = ProjectSettingsWindow(self.parent, self.compileBtn, self.stateEntry)
 
             ## Create the file and then compile
             # pyideProject = json.JSONEncoder({
             #     ''
             # })
+
+    def _quit(self, *args):
+        if not self.p is None:
+            self.p._quit()
+        else:
+            self.stateEntry.set_text('Finished')
+            self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.MENU))

@@ -12,6 +12,7 @@ from gi.repository.GdkPixbuf import Pixbuf
 from os import listdir
 from os.path import isfile, join
 from pygit2 import Repository
+from compiler import Compiler
 
 wW = __import__('welcomeWindow')
 
@@ -36,7 +37,7 @@ class IDEWindow(Gtk.Window):
         # i = Gtk.Image.new_from_icon_name('document-edit-symbolic', Gtk.IconSize.MENU)
         self.set_default_icon_name('document-edit-symbolic')
         #self.set_border_width(10)
-        self.connect('destroy', Gtk.main_quit)
+        self.connect('delete-event', self._quit)
 
         ### Win Accels
 
@@ -64,6 +65,7 @@ class IDEWindow(Gtk.Window):
         self.runningProccess = None
 
         self.filesObject = []
+        self.comp = None
 
         self.waitingForBracketCompletion = False
         self.autoToggling = False
@@ -157,10 +159,14 @@ class IDEWindow(Gtk.Window):
         #self.hb.pack_start(self.folderBtn)
 
         ########################################
-        self.hb.pack_start(self.compileBtn)
+        bx = Gtk.HBox()
+        bx.get_style_context().add_class('linked')
+        bx.pack_start(self.compileBtn, False, False, 0)
         self.stateEntry = Gtk.Entry()
         self.stateEntry.set_sensitive(False)
-        self.hb.pack_start(self.stateEntry)
+        self.stateEntry.set_text('Loaded')
+        bx.pack_start(self.stateEntry, False, False, 0)
+        self.hb.pack_start(bx)
         #self.hb.pack_start(self.terminalBtn)
         ########################################
 
@@ -177,13 +183,19 @@ class IDEWindow(Gtk.Window):
         self.sbuff = GtkSource.Buffer()
         self.lmngr = GtkSource.LanguageManager()
         self.sviewScroll = Gtk.ScrolledWindow()
+        self.sviewBox = Gtk.HBox()
+        self.smap = GtkSource.Map()
 
-        self.sview.set_buffer(self.sbuff)
+        self.smap.set_view(self.sview)
+
         self.sview.set_auto_indent(True)
+        self.sview.set_buffer(self.sbuff)
         self.sview.set_indent_on_tab(True)
-        self.sview.set_left_margin(5)
-        self.sview.set_tab_width(4)
         self.sview.set_insert_spaces_instead_of_tabs(False)
+        self.sview.set_left_margin(10)
+        self.sview.set_property('smart-home-end', GtkSource.SmartHomeEndType.ALWAYS)
+        self.sview.set_smart_backspace(True)
+        self.sview.set_tab_width(4)
         self.sbuff.connect('insert-text', self.onTextInsert)
         self.sbuff.connect('changed', self.onTextChanged)
         #self.sview.set_pixels_above_lines(5)
@@ -259,12 +271,15 @@ class IDEWindow(Gtk.Window):
         # MD Preview
 
         self.mdPreviewer = WebKit.WebView()
+        self.mdPreviewer.load_uri('file://' + os.path.dirname(os.path.abspath(__file__)) + '/browser/index.html')
 
         self.sviewScroll.add(self.sview)
+        self.sviewBox.pack_start(self.sviewScroll, True, True, 0)
+        self.sviewBox.pack_start(self.smap, False, False, 0)
 
         ##########################################
         self.sviewPaned = Gtk.Paned()
-        self.sviewPaned.pack1(self.sviewScroll, False, False)
+        self.sviewPaned.pack1(self.sviewBox, False, False)
         self.sviewPaned.pack2(self.mdPreviewer)
 
         self.pane.pack1(self.sideVBox, False, False)
@@ -279,14 +294,37 @@ class IDEWindow(Gtk.Window):
 
         self.loadSettings()
 
-        self.applyCSS()
-
         self.show_all()
 
         self.openProject(openPath)
         self.sviewPaned.get_child2().hide()
 
         Gtk.main()
+
+    def openTerminal(self, *args):
+        self.terminal.show()
+
+    def _quit(self, *args):
+        if len(self.filesObject) > 0:
+            unsaved = False
+            unsavedFile = ''
+            for i,f in enumerate(self.filesObject):
+                if not f['curText'] == f['originalText']:
+                    unsaved = True
+                    unsavedFile = os.path.basename(f['path'])
+                    break
+
+            if unsaved:
+                res = self.confirm('{} is not saved, are you sure you want to exit without saving?'.format(os.path.basename(f['path'])))
+                if res:
+                    Gtk.main_quit()
+                else:
+                    return True
+            else:
+                Gtk.main_quit()
+
+        else:
+            Gtk.main_quit()
 
     def onToggleDark(self, *args):
         if self.autoToggling:
@@ -357,11 +395,11 @@ class IDEWindow(Gtk.Window):
 
         curSettings = None
 
-        if os.path.exists('pyide-settings.json'):
-            with open('pyide-settings.json', 'r') as f:
+        if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pyide-settings.json')):
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pyide-settings.json'), 'r') as f:
                 curSettings = json.load(f)
         else:
-            with open('pyide-settings.json', 'w+') as f:
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pyide-settings.json'), 'w+') as f:
                 json.dump(defaultSettings, f, indent=4, sort_keys=True, separators=(',', ':'))
                 curSettings = defaultSettings
 
@@ -393,56 +431,8 @@ class IDEWindow(Gtk.Window):
 
         self.terminal.set_color_background(self.sview.get_style_context().get_background_color(Gtk.StateFlags.NORMAL))
 
-
-    def applyCSS(self, *args):
-        self.styleProvider = Gtk.CssProvider()
-
-        def_css = """
-
-            GtkWindow {
-                background: white;
-            }
-
-            GtkWindow, GtkListBox, GtkListBoxRow, GtkTextView, GtkSourceView {
-                background: #FFFFFF;
-                color: #5C616C;
-            }
-
-            GtkSourceView {
-                padding: 10px;
-                margin: 10px;
-            }
-
-            GtkPaned {
-                border-color: #DCDFE3;
-                color: #5C616C;
-            }
-
-        """
-
-        dark_css = """
-
-            GtkWindow, GtkListBox, GtkListBoxRow, GtkTextView, GtkSourceView {
-                background: #282C34;
-                color: #ABB2BF;
-            }
-
-            GtkPaned {
-                border-color: #181A1F;
-                color: #181A1F;
-            }
-
-        """
-
-        css = None
-
-        if self.darkMode:
-            css = dark_css
-        else:
-            css = def_css
-
-        self.styleProvider.load_from_data(bytes(css.encode()))
-        Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), self.styleProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    def is_exe(self, fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
     def getCurrentText(self, *args):
         return self.sbuff.get_text(self.sbuff.get_start_iter(), self.sbuff.get_end_iter(), False)
@@ -482,69 +472,6 @@ class IDEWindow(Gtk.Window):
         self.languageLbl.set_text('Language: {}'.format(self.sbuff.get_language().get_name()))
 
     def openProject(self, __file=None, *args):
-
-        # if __file is None: # in case no path is set (use chooser dialog)
-            # dialog = Gtk.FileChooserDialog('Select a project folder', self, Gtk.FileChooserAction.SELECT_FOLDER,(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-            # response = dialog.run()
-
-            # if response == Gtk.ResponseType.OK:
-                # self.projectPath = dialog.get_filename()
-                # self.hb.set_subtitle(self.projectPath)
-                # files = os.listdir(self.projectPath)
-                # self.files = None
-                # self.files = []
-
-                # self.compilerOptions = None
-                # self.compilerOptions = []
-
-
-                # for item in files:
-                    # self.files.append(item)
-                    # if not os.path.isdir(item):
-                        # self.compilerOptions.append('')
-                        # self.openFile(self.projectPath + '/' + self.files[0]) # Until I create a working TreeView
-                # self.buildTree(self)
-
-                # if len(self.compilerOptions) >= 1:
-                    # self.compileBtn.set_sensitive(True)
-
-            # dialog.destroy()
-        # else: # in case a path is set
-            # if __file == '.':
-                # self.projectPath = os.path.dirname(os.path.abspath(__file__))
-            # else:
-                # if not os.path.isdir(__file):
-                    # print("{} is not a directory!".format(__file))
-                    # sys.exit()
-                # else:
-                    # self.projectPath = __file
-            # self.hb.set_subtitle(self.projectPath)
-            # files = os.listdir(self.projectPath)
-            # self.files = None
-            # self.files = []
-
-            # self.compilerOptions = None
-            # self.compilerOptions = []
-
-            # i = 0
-            # for item in files:
-                # self.files.append(item)
-                # if not os.path.isdir(self.projectPath + '/' + item):
-                    # if isTextFile(str(item)) == False: # Checking if file is text file
-                        # continue
-                    # self.compilerOptions.append('')
-                    #self.openFile(self.projectPath + '/' + self.files[i]) # Until I create a working TreeView
-                # i += 1
-
-            # self.langs = None
-            # self.langs = [None] * len(self.files)
-            #print(len(self.langs))
-
-            # self.tempFilesText = None
-            # self.tempFilesText = [None] * len(self.files)
-            #print(len(self.tempFilesText))
-
-            # self.buildTree(self)
 
             ## Check if given project path is really a path, if so set it as self.projectPath
 
@@ -640,13 +567,14 @@ class IDEWindow(Gtk.Window):
             pathArr = path.split(':')
             fileFullPath = ''
 
-            if not os.path.isdir(os.path.realpath(model[row][0])):
+            if not os.path.isdir(os.path.realpath(os.path.join(self.projectPath, model[row][0]))):
                 # self.openFile(os.path.realpath(model[row][0]))
 
                 if len(pathArr) <= 1:
-                    self.openFile(os.path.realpath(model[row][0]))
+                    self.openFile(os.path.realpath(os.path.join(self.projectPath, model[row][0])))
                 else:
                     # Don't know what to do!
+                    print('Can\'t open this yet')
 
                 self.languageLbl.set_text('Language: {}'.format(self.sbuff.get_language().get_name()))
                 
@@ -667,7 +595,7 @@ class IDEWindow(Gtk.Window):
             # Determine if the item is a folder
             itemIsFolder = stat.S_ISDIR(itemMetaData.st_mode)
             # Generate an icon from the default icon theme
-            itemIcon = Gtk.IconTheme.get_default().load_icon("folder" if itemIsFolder else "text-x-script", 22, 0)
+            itemIcon = Gtk.IconTheme.get_default().load_icon("folder" if itemIsFolder else "text-x-script" if not self.is_exe(os.path.join(self.projectPath, itemFullname)) else "application-x-executable", 22, 0)
             # Append the item to the TreeStore
             currentIter = treeStore.append(parent, [item, itemIcon, itemFullname])
             # add dummy if current item was a folder
@@ -735,6 +663,14 @@ class IDEWindow(Gtk.Window):
             self.sbuff.set_text(f['curText'])
             self.sbuff.set_language(f['language'])
             self.hb.set_subtitle(f['path'])
+
+            if self.sbuff.get_language().get_name().lower() == "markdown":
+                self.sviewPaned.get_child2().show()
+                self.mdPreviewer.execute_script('writeMd("' + re.escape(self.getCurrentText()) + '");')
+                # print(re.escape(self.getCurrentText()))
+            else:
+                self.sviewPaned.get_child2().hide()
+
         else:
             with open(filePath, 'r') as f:
                 txt = f.read()
@@ -760,12 +696,10 @@ class IDEWindow(Gtk.Window):
 
                 # print(self.getCurrentText())
 
-                if self.sbuff.get_language().get_name().lower() == "markdown":
+                if not self.sbuff.get_language().get_name() is None and self.sbuff.get_language().get_name().lower() == "markdown":
                     self.sviewPaned.get_child2().show()
-                    self.mdPreviewer.load_uri('file://' + os.path.dirname(os.path.abspath(__file__)) + '/browser/index.html')
-                    txt = f.readlines()
-                    newText = '\t'.join([line.strip() for line in txt])
-                    self.mdPreviewer.execute_script('writeMd("' + '# PyIDE' + '");')
+                    self.mdPreviewer.execute_script('writeMd("' + re.escape(self.getCurrentText()) + '");')
+                    # print(re.escape(self.getCurrentText()))
                 else:
                     self.sviewPaned.get_child2().hide()
 
@@ -777,12 +711,13 @@ class IDEWindow(Gtk.Window):
         with open(_f, 'w') as f:
             text = self.getCurrentText()
             f.write(text)
+            self.filesObject[self.curFileIndex]['originalText'] = text
         print("Tried to save {}".format(_f))
 
         curSettings = None
 
-        if os.path.exists('pyide-settings.json'):
-            with open('pyide-settings.json', 'r') as f:
+        if _f == os.path.join(os.path.abspath(__file__), 'pyide-settings.json'):
+            with open(os.path.join(os.path.abspath(__file__), 'pyide-settings.json'), 'r') as f:
                 curSettings = json.load(f)
                 #print(self.curSettings == curSettings)
             if self.curSettings != curSettings:
@@ -830,6 +765,18 @@ class IDEWindow(Gtk.Window):
         else:
             return None
 
+    def confirm(self, message):
+        dialogWindow = Gtk.MessageDialog(self,
+                              Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT,
+                              Gtk.MessageType.INFO,
+                              Gtk.ButtonsType.OK_CANCEL,
+                              message)
+        response = dialogWindow.run()
+        dialogWindow.destroy()
+        return (response == Gtk.ResponseType.OK)
+        
+
+
     def compile(self, *args):
 
         # if self.running:
@@ -872,11 +819,18 @@ class IDEWindow(Gtk.Window):
         #         print(output)
         #         print(error)
 
-        self.stateEntry.set_text('Compiling...')
-        from compiler import Compiler
+        if self.running:
+            ##
+            self.comp._quit()
+        else:
+            
+            self.comp = Compiler(self, self.projectPath, self.stateEntry, self.compileBtn)
+            self.comp.compile()
 
-        comp = Compiler(self, self.projectPath, self.stateEntry, self.compileBtn)
-        comp.compile()
+        self.running = not self.running
+
+    def toggleRunning(self, *args):
+        self.running = not self.running
 
 if len(sys.argv) == 1:
     w = wW.WelcomeWindow()

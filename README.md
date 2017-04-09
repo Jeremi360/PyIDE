@@ -1,12 +1,12 @@
 # Py IDE
 
-Py IDE is a basic IDE for Linux and Mac (if you use Windows, don't) written in Python3 and using GTK3 libraries as GUI. It is inspired on Visual Studio for Mac (not VS Code) - released on November 16th 2016.
+PyIDE is a basic IDE for Linux and Mac (Windows users please install Linux) written in Python3 and using GTK3 libraries as GUI. It is inspired on Visual Studio for Mac (not VS Code).
 
 __Status:__ Barely works as a code editor :(
 
 Right now it looks something like this:
 
-![](ide-preview.png)
+![](pyide-preview.png)
 
 ## How to use
 
@@ -37,32 +37,38 @@ Sort of works.
 * Retarded code completion (based on what you've already typed)
 * Crappy "Compile and Run" (you'll see why)
 * Basic update on-the-go settings (still doesn't have a settings window, but you can do some stuff with the settings button)
+* Integrated terminal
+* Dark mode
 
 ## To-do
 
-A lot. Check out what is being developed right now:
+There is a long way ahead with so many features to add, check out some of them.
 
-* Menu button featuring settings menu, new file and folder creation, manual syntax highlighting language setting, and more.
-* Real time external files/folders creation detection (update and add them to the Tree View)
+* Manual syntax highlighting language setting, indentation settings.
+* Real time external files/folders creation detection (update and add/remove them to/from the Tree View)
 * Tree View support for folders
-* Improve dark theme
-* Live HTML and CSS preview (using WebKit2-4.0)
-* Full git integration
-* Native image support
-* Markdown preview
+* Live HTML and Markdown preview (using WebKit-3.0)
+* Git operations (such as commit, push, import project from repo, etc)
+* Integrated image viewer
+* Theming (for syntax highlighting)
 
 ## Recent Updates
 
 * Started working on Markdown preview
 * Layout changes
 * Settings button
+* File details
+* New build/run/compile system
+* Bug fixes
+* Confirm on exit
 
 ## Known Issues
 
-* Create a project is broken (totally)
-* Buttons bellow Tree View don't work (I haven't created a function for them yet)
-* Doesn't alert you if you close the editor without saving a file
-* Tree View doesn't do anything with folders yet
+* Create a project doesn't work
+* Create new file and create new folder buttons don't work
+* ~~No confirm exit even with unsaved modified files~~
+* Can't open files inside folders
+* Markdown previewer is broken
 
 ## FAQ*
 
