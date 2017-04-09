@@ -55,16 +55,16 @@ There is a long way ahead with so many features to add, check out some of them.
 ## Recent Updates
 
 * Started working on Markdown preview
-* Layout changes
-* Settings button
-* File details
+* Redesigned Welcome Window
 * New build/run/compile system
+* Minimap
+* Compiling and project creation
 * Bug fixes
-* Confirm on exit
 
 ## Known Issues
 
-* Create a project doesn't work
+* ~~Create a project doesn't work~~
+* Compile doesn't work for old projects
 * Create new file and create new folder buttons don't work
 * ~~No confirm exit even with unsaved modified files~~
 * Can't open files inside folders
@@ -76,4 +76,8 @@ There is a long way ahead with so many features to add, check out some of them.
 
 __What theme is that?__
 
-That is Arc Flatabulous, best theme ever (yes it has a dark version).
+Tha is Numix Gtk.
+
+__For older versions__
+
+That was Arc Flatabulous.
