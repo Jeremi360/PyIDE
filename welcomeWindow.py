@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Had to install libgtksourceview-3.0-dev
 
 import gi, os, sys, subprocess, json
@@ -167,8 +165,8 @@ class WelcomeWindow(Gtk.Window):
 
 int main(int argv, const char **argc)
 {
-    printf("Hello World\\n");
-    return 0;
+        printf("Hello World\\n");
+        return 0;
 }
 '''
             hasMakefile = True
@@ -182,10 +180,10 @@ int main(int argv, const char **argc)
 
 using namespace std;
 
-void main()
+int main(int argc, char const *argv[])
 {
-    cout << "Hello World" << endl;
-    return;
+        cout << "Hello World" << endl;
+        return 0;
 }
 '''
 
@@ -199,6 +197,9 @@ void main()
 """ Created with PyIDE """
 
 print("Hello World\\n")
+'''
+            hasMakefile = True
+            makefile = '''python3 main.py
 '''
         else:
             return

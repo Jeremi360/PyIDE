@@ -4,67 +4,67 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-Compiler	../compiler.py	/^class Compiler:$/;"	kind:class	line:86
+Compiler	../compiler.py	/^class Compiler:$/;"	kind:class	line:87
 IDEWindow	../main.py	/^class IDEWindow(Gtk.Window):$/;"	kind:class	line:27
 ProjectSettingsWindow	../compiler.py	/^class ProjectSettingsWindow(Gtk.Window):$/;"	kind:class	line:6
 WelcomeWindow	../welcomeWindow.py	/^class WelcomeWindow(Gtk.Window):$/;"	kind:class	line:13
 Window	../test.py	/^class Window(Gtk.Window):$/;"	kind:class	line:5
 __init__	../compiler.py	/^    def __init__(self, parent, btn, entry):$/;"	kind:member	line:7
-__init__	../compiler.py	/^    def __init__(self, parent, path, entry, btn):$/;"	kind:member	line:88
+__init__	../compiler.py	/^    def __init__(self, parent, path, entry, btn):$/;"	kind:member	line:89
 __init__	../main.py	/^    def __init__(self, openPath):$/;"	kind:member	line:29
 __init__	../test.py	/^    def __init__(self, *args):$/;"	kind:member	line:6
 __init__	../welcomeWindow.py	/^    def __init__(self):$/;"	kind:member	line:16
 __init__.py	../__init__.py	1;"	kind:file	line:1
-_quit	../compiler.py	/^    def _quit(self, *args):$/;"	kind:member	line:129
+_quit	../compiler.py	/^    def _quit(self, *args):$/;"	kind:member	line:135
 _quit	../compiler.py	/^    def _quit(self, *args):$/;"	kind:member	line:81
-_quit	../main.py	/^    def _quit(self, *args):$/;"	kind:member	line:307
-a	../main.py	/^    a = IDEWindow(sys.argv[1])$/;"	kind:variable	line:838
+_quit	../main.py	/^    def _quit(self, *args):$/;"	kind:member	line:310
+a	../main.py	/^    a = IDEWindow(sys.argv[1])$/;"	kind:variable	line:802
 a	../test.py	/^a = Window()$/;"	kind:variable	line:26
-applySettings	../main.py	/^    def applySettings(self, *args):$/;"	kind:member	line:415
+applySettings	../main.py	/^    def applySettings(self, *args):$/;"	kind:member	line:418
 applySettings	../welcomeWindow.py	/^    def applySettings(self, *args):$/;"	kind:member	line:272
-bracketComplete	../main.py	/^    def bracketComplete(self, *args):$/;"	kind:member	line:389
+bracketComplete	../main.py	/^    def bracketComplete(self, *args):$/;"	kind:member	line:392
 buildInterface	../compiler.py	/^    def buildInterface(self, *args):$/;"	kind:member	line:22
-buildTree	../main.py	/^    def buildTree(self, *args):$/;"	kind:member	line:726
-compile	../compiler.py	/^    def compile(self, *args):$/;"	kind:member	line:104
-compile	../main.py	/^    def compile(self, *args):$/;"	kind:member	line:780
+buildTree	../main.py	/^    def buildTree(self, *args):$/;"	kind:member	line:733
+compile	../compiler.py	/^    def compile(self, *args):$/;"	kind:member	line:106
+compile	../main.py	/^    def compile(self, *args):$/;"	kind:member	line:787
 compiler.py	../compiler.py	1;"	kind:file	line:1
-confirm	../main.py	/^    def confirm(self, message):$/;"	kind:member	line:768
+confirm	../main.py	/^    def confirm(self, message):$/;"	kind:member	line:775
 createMainFile	../welcomeWindow.py	/^    def createMainFile(self, *args):$/;"	kind:member	line:157
 createProject	../welcomeWindow.py	/^    def createProject(self, *args):$/;"	kind:member	line:228
-entryDialog	../main.py	/^    def entryDialog(self, message, title=''):$/;"	kind:member	line:744
-getCurrentText	../main.py	/^    def getCurrentText(self, *args):$/;"	kind:member	line:437
+entryDialog	../main.py	/^    def entryDialog(self, message, title=''):$/;"	kind:member	line:751
+getCurrentText	../main.py	/^    def getCurrentText(self, *args):$/;"	kind:member	line:440
 getLang	../welcomeWindow.py	/^    def getLang(self, *args):$/;"	kind:member	line:213
-handleSideClick	../main.py	/^    def handleSideClick(self, *args):$/;"	kind:member	line:444
+handleSideClick	../main.py	/^    def handleSideClick(self, *args):$/;"	kind:member	line:447
 isImageFile	../main.py	/^def isImageFile(fn):$/;"	kind:function	line:23
 isTextFile	../main.py	/^def isTextFile(fn):$/;"	kind:function	line:19
-is_exe	../main.py	/^    def is_exe(self, fpath):$/;"	kind:member	line:434
-loadSettings	../main.py	/^    def loadSettings(self, *args):$/;"	kind:member	line:392
+is_exe	../main.py	/^    def is_exe(self, fpath):$/;"	kind:member	line:437
+loadSettings	../main.py	/^    def loadSettings(self, *args):$/;"	kind:member	line:395
 loadSettings	../welcomeWindow.py	/^    def loadSettings(self, *args):$/;"	kind:member	line:252
 main.py	../main.py	1;"	kind:file	line:1
-onLinesCliked	../main.py	/^    def onLinesCliked(self, *args):$/;"	kind:member	line:336
-onRowActivated	../main.py	/^    def onRowActivated(self, selection):$/;"	kind:member	line:561
-onRowCollapsed	../main.py	/^    def onRowCollapsed(self, treeView, treeIter, treePath):$/;"	kind:member	line:618
-onRowExpanded	../main.py	/^    def onRowExpanded(self, treeView, treeIter, treePath):$/;"	kind:member	line:608
-onSettingsBtnClick	../main.py	/^    def onSettingsBtnClick(self, *args):$/;"	kind:member	line:386
-onTextChanged	../main.py	/^    def onTextChanged(self, *args):$/;"	kind:member	line:359
-onTextInsert	../main.py	/^    def onTextInsert(self, buff, location, text, len):$/;"	kind:member	line:376
-onToggleDark	../main.py	/^    def onToggleDark(self, *args):$/;"	kind:member	line:329
-onToggleHighlight	../main.py	/^    def onToggleHighlight(self, *args):$/;"	kind:member	line:351
-onToggleLine	../main.py	/^    def onToggleLine(self, *args):$/;"	kind:member	line:343
-openFile	../main.py	/^    def openFile(self, filePath, *args):$/;"	kind:member	line:645
-openFileFromTemp	../main.py	/^    def openFileFromTemp(self, *args):$/;"	kind:member	line:632
-openProject	../main.py	/^    def openProject(self, __file=None, *args):$/;"	kind:member	line:474
+onLinesCliked	../main.py	/^    def onLinesCliked(self, *args):$/;"	kind:member	line:339
+onRowActivated	../main.py	/^    def onRowActivated(self, selection):$/;"	kind:member	line:568
+onRowCollapsed	../main.py	/^    def onRowCollapsed(self, treeView, treeIter, treePath):$/;"	kind:member	line:625
+onRowExpanded	../main.py	/^    def onRowExpanded(self, treeView, treeIter, treePath):$/;"	kind:member	line:615
+onSettingsBtnClick	../main.py	/^    def onSettingsBtnClick(self, *args):$/;"	kind:member	line:389
+onTextChanged	../main.py	/^    def onTextChanged(self, *args):$/;"	kind:member	line:362
+onTextInsert	../main.py	/^    def onTextInsert(self, buff, location, text, len):$/;"	kind:member	line:379
+onToggleDark	../main.py	/^    def onToggleDark(self, *args):$/;"	kind:member	line:332
+onToggleHighlight	../main.py	/^    def onToggleHighlight(self, *args):$/;"	kind:member	line:354
+onToggleLine	../main.py	/^    def onToggleLine(self, *args):$/;"	kind:member	line:346
+openFile	../main.py	/^    def openFile(self, filePath, *args):$/;"	kind:member	line:652
+openFileFromTemp	../main.py	/^    def openFileFromTemp(self, *args):$/;"	kind:member	line:639
+openProject	../main.py	/^    def openProject(self, __file=None, *args):$/;"	kind:member	line:477
 openProject	../welcomeWindow.py	/^    def openProject(self, *args):$/;"	kind:member	line:216
-openTerminal	../main.py	/^    def openTerminal(self, *args):$/;"	kind:member	line:304
-populateFileSystemTreeStore	../main.py	/^    def populateFileSystemTreeStore(self, treeStore, path, parent=None):$/;"	kind:member	line:585
-saveFile	../main.py	/^    def saveFile(self, *args):$/;"	kind:member	line:706
-saveOnChangeFile	../main.py	/^    def saveOnChangeFile(self, *args):$/;"	kind:member	line:440
-saveSettings	../main.py	/^    def saveSettings(self, *args):$/;"	kind:member	line:340
+openTerminal	../main.py	/^    def openTerminal(self, *args):$/;"	kind:member	line:307
+populateFileSystemTreeStore	../main.py	/^    def populateFileSystemTreeStore(self, treeStore, path, parent=None):$/;"	kind:member	line:592
+saveFile	../main.py	/^    def saveFile(self, *args):$/;"	kind:member	line:713
+saveOnChangeFile	../main.py	/^    def saveOnChangeFile(self, *args):$/;"	kind:member	line:443
+saveSettings	../main.py	/^    def saveSettings(self, *args):$/;"	kind:member	line:343
 showHome	../welcomeWindow.py	/^    def showHome(self, *args):$/;"	kind:member	line:45
 showProjectCreation	../welcomeWindow.py	/^    def showProjectCreation(self, *args):$/;"	kind:member	line:92
 test.py	../test.py	1;"	kind:file	line:1
-toggleRunning	../main.py	/^    def toggleRunning(self, *args):$/;"	kind:member	line:832
-toggleTerminal	../main.py	/^    def toggleTerminal(self, *args):$/;"	kind:member	line:380
-w	../main.py	/^    w = wW.WelcomeWindow()$/;"	kind:variable	line:836
+toggleTerminal	../main.py	/^    def toggleTerminal(self, *args):$/;"	kind:member	line:383
+updateMinimap	../main.py	/^    def updateMinimap(self, *args):$/;"	kind:member	line:564
+w	../main.py	/^    w = wW.WelcomeWindow()$/;"	kind:variable	line:800
 wW	../main.py	/^wW = __import__('welcomeWindow')$/;"	kind:variable	line:17
 welcomeWindow.py	../welcomeWindow.py	1;"	kind:file	line:1

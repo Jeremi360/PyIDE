@@ -1,8 +1,8 @@
 # Py IDE
 
-PyIDE is a basic IDE for Linux and Mac (Windows users please install Linux) written in Python3 and using GTK3 libraries as GUI. It is inspired on Visual Studio for Mac (not VS Code).
+PyIDE is a basic IDE for Linux written in Python3 + Gtk3. Initially it was inspired on Visual Sutdio for Mac's design.
 
-__Status:__ Barely works as a code editor :(
+__Status:__ Almost works as a simple code editor
 
 Right now it looks something like this:
 
@@ -28,6 +28,8 @@ Running the IDE:
 
 \*Quick launcher removed
 
+__As I don't own a set of file icons, you must have a decent icon theme installed and set as default in order to PyIDE work, otherwise it will crash!__
+
 ## Features
 
 Sort of works.
@@ -51,23 +53,24 @@ There is a long way ahead with so many features to add, check out some of them.
 * Git operations (such as commit, push, import project from repo, etc)
 * Integrated image viewer
 * Theming (for syntax highlighting)
+* Modules (plugins)
+* Search and replace
 
 ## Recent Updates
 
-* Started working on Markdown preview
-* Redesigned Welcome Window
-* New build/run/compile system
-* Minimap
-* Compiling and project creation
-* Bug fixes
+* Searching for Minimap bug workarround
+* Bug fixes (on get file languages)
+* Started working on a flexible moudules loader
+* You can now open files inside folders
+* Git icon varies according to darkMode (True/False)
 
 ## Known Issues
 
 * ~~Create a project doesn't work~~
-* Compile doesn't work for old projects
+* ~~Compile doesn't work for old projects~~
 * Create new file and create new folder buttons don't work
 * ~~No confirm exit even with unsaved modified files~~
-* Can't open files inside folders
+* ~~Can't open files inside folders~~
 * Markdown previewer is broken
 
 ## FAQ*

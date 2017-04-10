@@ -4,13 +4,15 @@ from gi.repository import Gtk
 from time import sleep
 
 class ProjectSettingsWindow(Gtk.Window):
-    def __init__(self, parent, btn, entry):
+    def __init__(self, parent, btn, entry, path, compiler):
 
         super(ProjectSettingsWindow, self).__init__()
 
         self.parent = parent
         self.compileBtn = btn
         self.stateEntry = entry
+        self.path = path
+        self.compiler = compiler
 
         self.set_default_size(400, 600)
         self.connect('destroy', self._quit)
@@ -27,6 +29,7 @@ class ProjectSettingsWindow(Gtk.Window):
         self.cancelBtn = Gtk.Button('Cancel')
         self.cancelBtn.connect('clicked', self._quit)
         self.continueBtn = Gtk.Button('Continue')
+        self.continueBtn.connect('clicked', self.createMake)
 
         self.hb.pack_start(self.cancelBtn)
         self.hb.pack_end(self.continueBtn)
@@ -41,21 +44,28 @@ class ProjectSettingsWindow(Gtk.Window):
 
         v = Gtk.VBox()
         v.pack_start(Gtk.Label('Language'), True, True, 0)
-        r1 = Gtk.RadioButton.new_with_label(None, 'C')
-        r2 = Gtk.RadioButton.new_with_label_from_widget(r1, 'C++')
-        r3 = Gtk.RadioButton.new_with_label_from_widget(r2, 'Python')
-        r4 = Gtk.RadioButton.new_with_label_from_widget(r3, 'Other')
-        r1.set_mode(False)
-        r2.set_mode(False)
-        r3.set_mode(False)
-        r4.set_mode(False)
+        
+        self.cLang = Gtk.RadioButton.new_with_label(None, 'C')
+        self.cLang.connect('toggled', self.getLang)
+        self.cppLang = Gtk.RadioButton.new_with_label_from_widget(self.cLang, 'C++')
+        self.cppLang.connect('toggled', self.getLang)
+        self.pyLang = Gtk.RadioButton.new_with_label_from_widget(self.cppLang, 'Python')
+        self.pyLang.connect('toggled', self.getLang)
+        self.otherLang = Gtk.RadioButton.new_with_label_from_widget(self.pyLang, 'Other')
+        self.otherLang.connect('toggled', self.getLang)
+
+        ##
+        self.cLang.set_mode(False)
+        self.cppLang.set_mode(False)
+        self.pyLang.set_mode(False)
+        self.otherLang.set_mode(False)
 
         h = Gtk.HBox()
         h.get_style_context().add_class('linked')
-        h.pack_start(r1, True, True, 0)
-        h.pack_start(r2, True, True, 0)
-        h.pack_start(r3, True, True, 0)
-        h.pack_start(r4, True, True, 0)
+        h.pack_start(self.cLang, True, True, 0)
+        h.pack_start(self.cppLang, True, True, 0)
+        h.pack_start(self.pyLang, True, True, 0)
+        h.pack_start(self.otherLang, True, True, 0)
 
         v.pack_start(h, False, False, 0)
 
@@ -78,7 +88,39 @@ class ProjectSettingsWindow(Gtk.Window):
 
         self.add(_hb)
 
+    def createMake(self, *args):
+        self.getLang()
+        with open(os.path.join(self.path, '.pyide-project.json'), 'w+') as f:
+            defaultSettings = {
+                'path': self.path,
+                'language': self.language,
+                'name': self.path.split('/')[len(self.path.split('/')) - 1]
+            }
+            json.dump(defaultSettings, f, indent=4, sort_keys=True, separators=(',', ':'))
+
+        cmake = '''gcc -o out *.c
+./out
+'''
+        cppmake = '''g++ -o out *.cpp
+./out
+'''
+
+        pymake = '''python3 main.py
+'''
+
+        if not self.language == 'other':
+            with open(os.path.join(self.path, 'Makefile'), 'w+') as f:
+                text = cmake if self.language == 'c' else cppmake if self.language == 'cpp' else pymake
+                f.write(text)
+
+        self.compiler.compile()
+        self.destroy()
+        
+    def getLang(self, *args):
+        self.language = 'c' if self.cLang.get_active() else 'cpp' if self.cppLang.get_active() else 'py' if self.pyLang.get_active() else 'other'
+
     def _quit(self, *args):
+        self.parent.running = False
         self.stateEntry.set_text('Finished')
         self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.MENU))
         self.destroy()
@@ -96,12 +138,15 @@ class Compiler:
         self.stateEntry = entry
 
         self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-stop-symbolic', Gtk.IconSize.MENU))
-        self.stateEntry.set_text('Build in progress...')        
+        self.stateEntry.set_text('Build in progress...')
+        self.compileBtn.show_all()   
 
         self.p = None
 
 
     def compile(self, *args):
+
+        self.parent.running = True
 
         if os.path.isfile(os.path.join(self.path, '.pyide-project.json')):
 
@@ -110,6 +155,8 @@ class Compiler:
                 print('Found file')
                 project = json.load(f)
                 if os.path.exists(os.path.join(self.path, 'Makefile')):
+                    self.stateEntry.set_text('Running...')
+                    Gtk.main_iteration()
                     self.parent.openTerminal()
                     with open(os.path.join(self.path, 'Makefile'), 'r') as f:
                         command = f.readlines()
@@ -119,7 +166,7 @@ class Compiler:
                         
         else:
 
-            self.p = ProjectSettingsWindow(self.parent, self.compileBtn, self.stateEntry)
+            self.p = ProjectSettingsWindow(self.parent, self.compileBtn, self.stateEntry, self.path, self)
 
             ## Create the file and then compile
             # pyideProject = json.JSONEncoder({
@@ -130,5 +177,6 @@ class Compiler:
         if not self.p is None:
             self.p._quit()
         else:
+            self.parent.running = False
             self.stateEntry.set_text('Finished')
             self.compileBtn.set_image(Gtk.Image.new_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.MENU))
