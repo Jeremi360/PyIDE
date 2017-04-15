@@ -1,1 +1,2 @@
-python3 main.py
+all:
+	python3 main.py

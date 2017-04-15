@@ -22,7 +22,7 @@ class AutoBracket:
         }
 
     def do_activate(self, *args):
-        print('Auto Bracket module activated')
+        print('Auto Bracket module activated.')
         self.sview.connect('event-after', self.complete)
 
     def complete(self, view, event):

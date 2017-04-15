@@ -98,14 +98,17 @@ class ProjectSettingsWindow(Gtk.Window):
             }
             json.dump(defaultSettings, f, indent=4, sort_keys=True, separators=(',', ':'))
 
-        cmake = '''gcc -o out *.c
-./out
+        cmake = '''all:
+    gcc -o out *.c
+    ./out
 '''
-        cppmake = '''g++ -o out *.cpp
-./out
+        cppmake = '''all:
+    g++ -o out *.cpp
+    ./out
 '''
 
-        pymake = '''python3 main.py
+        pymake = '''all:
+    python3 main.py
 '''
 
         if not self.language == 'other':
@@ -158,10 +161,11 @@ class Compiler:
                     self.stateEntry.set_text('Running...')
                     Gtk.main_iteration()
                     self.parent.openTerminal()
-                    with open(os.path.join(self.path, 'Makefile'), 'r') as f:
-                        command = f.readlines()
-                        for l in command:
-                            self.parent.terminal.feed_child(l, len(l))
+                    # with open(os.path.join(self.path, 'Makefile'), 'r') as f:
+                    #     command = f.readlines()
+                    #     for l in command:
+                    #         self.parent.terminal.feed_child(l, len(l))
+                    self.parent.terminal.feed_child("make all\n", len("make all\n"))
                     self._quit()
                         
         else:
