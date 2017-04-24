@@ -269,7 +269,9 @@ class IDEWindow(Gtk.Window):
         hb = Gtk.HBox()
         hb.get_style_context().add_class('linked')
         self.sideNewFileBtn = Gtk.Button.new_from_icon_name('document-new-symbolic', Gtk.IconSize.MENU)
+        self.sideNewFileBtn.connect('clicked', self.createNewFile)
         self.sideNewFolderBtn = Gtk.Button.new_from_icon_name('folder-new-symbolic', Gtk.IconSize.MENU)
+        self.sideNewFolderBtn.connect('clicked', self.createNewFolder)
         hb.pack_start(self.sideNewFileBtn, False, False, 0)
         hb.pack_start(self.sideNewFolderBtn, False, False, 0)
 
@@ -615,6 +617,10 @@ class IDEWindow(Gtk.Window):
             scrollView = Gtk.ScrolledWindow()
             # scrollView.add(fileSystemTreeView)
 
+            if len(self.sideScroller.get_children()) >= 1:
+                self.sideScroller.remove(self.sideScroller.get_child())
+                print('removed')
+
             self.sideScroller.add(fileSystemTreeView)
             self.sideScroller.show_all()
 
@@ -635,6 +641,12 @@ class IDEWindow(Gtk.Window):
                     )
             self.terminal.hide()
 
+            if hasattr(self, 'gitButton'):
+                self.hb.remove(self.gitButton)
+
+            self.gitButton = Gtk.Button()
+            self.hb.pack_end(self.gitButton)
+
             if os.path.isdir(self.projectPath + '/.git'):
                 text = Repository(self.projectPath).head.shorthand
                 repo = Gtk.HBox(spacing=6)
@@ -647,12 +659,15 @@ class IDEWindow(Gtk.Window):
                 repo.pack_start(Gtk.Label(text), False, False, 0)
                 repo.show_all()
 
-                self.gitButton = Gtk.Button()
+                if len(self.gitButton) >= 1:
+                    self.gitButton.remove(self.gitButton.get_child())
+
                 self.gitButton.add(repo)
                 self.gitButton.show_all()
                 self.gitButton.set_tooltip_text("On branch " + text)
 
-                self.hb.pack_end(self.gitButton)
+            else:
+                self.gitButton.hide()
 
     def updateMinimap(self, *args):
         self.smap.show_all()
@@ -722,7 +737,11 @@ class IDEWindow(Gtk.Window):
             # Determine if the item is a folder
             itemIsFolder = stat.S_ISDIR(itemMetaData.st_mode)
             # Generate an icon from the default icon theme
-            itemIcon = Gtk.IconTheme.get_default().load_icon("folder" if itemIsFolder else "gnome-mime-text-x-c" if os.path.splitext(itemFullname)[1] == '.c' else "gnome-mime-text-x-c++" if os.path.splitext(itemFullname)[1] == '.cpp' else "gnome-mime-text-x-python" if os.path.splitext(itemFullname)[1] == '.py' else "application-json" if os.path.splitext(itemFullname)[1] == '.json' else "text-x-markdown" if os.path.splitext(itemFullname)[1] == '.md' else "text-x-cmake" if os.path.basename(itemFullname) == 'Makefile' else "gnome-mime-image" if os.path.splitext(itemFullname)[1] in ['.png', '.jpg', '.jpeg', '.gif'] else "text-x-script" if not self.is_exe(os.path.join(self.projectPath, itemFullname)) else "application-x-executable", 22, 0)
+            itemIcon = None
+            try:
+            	itemIcon = Gtk.IconTheme.get_default().load_icon("folder" if itemIsFolder else "gnome-mime-text-x-c" if os.path.splitext(itemFullname)[1] == '.c' else "gnome-mime-text-x-c++" if os.path.splitext(itemFullname)[1] == '.cpp' else "gnome-mime-text-x-python" if os.path.splitext(itemFullname)[1] == '.py' else "application-json" if os.path.splitext(itemFullname)[1] == '.json' else "text-x-markdown" if os.path.splitext(itemFullname)[1] == '.md' else "text-x-cmake" if os.path.basename(itemFullname) == 'Makefile' else "gnome-mime-image" if os.path.splitext(itemFullname)[1] in ['.png', '.jpg', '.jpeg', '.gif'] else "text-x-script" if not self.is_exe(os.path.join(self.projectPath, itemFullname)) else "application-x-executable", 22, 0)
+            except:
+            	itemIcon = Gtk.IconTheme.get_default().load_icon("text-x-script", 22, 0)
 
             # print('{} is equal to Makefile? {}'.format(itemFullname, itemFullname == 'Makefile'))
             # Append the item to the TreeStore
@@ -874,7 +893,7 @@ class IDEWindow(Gtk.Window):
 
         self.sideView.show_all()
 
-    def entryDialog(self, message, title=''):
+    def entryDialog(self, message, title='', defaultText=''):
         # Returns user input as a string or None
         # If user does not input text it returns None, NOT AN EMPTY STRING.
         dialogWindow = Gtk.MessageDialog(self, Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.INFO, Gtk.ButtonsType.OK_CANCEL, message)
@@ -883,6 +902,7 @@ class IDEWindow(Gtk.Window):
 
         dialogBox = dialogWindow.get_content_area()
         userEntry = Gtk.Entry()
+        userEntry.set_text(defaultText)
         dialogBox.pack_end(userEntry, False, False, 0)
 
         dialogWindow.show_all()
@@ -912,9 +932,26 @@ class IDEWindow(Gtk.Window):
             self.comp = Compiler(self, self.projectPath, self.stateEntry, self.compileBtn)
             self.comp.compile()
 
+    def createNewFile(self, *args):
+        filename = self.entryDialog('File Path', 'Please type in the path starting from ' + self.projectPath, '')
+
+        if not filename is None:
+            print(os.path.join(self.projectPath, filename))
+            if not os.path.isfile(os.path.join(self.projectPath, filename)):
+                open(os.path.join(self.projectPath, filename), 'w+')
+                self.openProject(self.projectPath)
+
+    def createNewFolder(self, *args):
+        foldername = self.entryDialog('Folder Path', 'Please type in the path starting from ' + self.projectPath, '')
+
+        if not foldername is None:
+            print(os.path.join(self.projectPath, foldername))
+            os.makedirs(os.path.join(self.projectPath, foldername), exist_ok=True)
+            self.openProject(self.projectPath)
+
 if len(sys.argv) == 1:
     w = wW.WelcomeWindow()
 elif len(sys.argv) == 2:
     a = IDEWindow(sys.argv[1])
 else:
-    print('Wrong use')
+    print('Wrong use, usage: python3 main.py [PATH/TO/FOLDER OR NONE]')

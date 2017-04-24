@@ -8,9 +8,9 @@ from gi.repository import GObject, Gtk, GtkSource
 #FIXME: find real icon names
 icon_names = {'import': 'object-straighten-symbolic',
               'module': 'object-straighten-symbolic',
-              'class': 'object-straighten-symbolic',
+              'class': 'insert-object-symbolic',
               'function': 'func',
-              'statement': '',
+              'statement': 'insert-link-symbolic',
               'param': ''}
 
 class Jedi:
@@ -110,10 +110,11 @@ class GediCompletionProvider(GObject.Object, GtkSource.CompletionProvider):
                 return theme.load_icon(icon_names[_type.lower()], 16, 0)
             else:
                 print('Not symbolic')
-                path = os.path.abspath(__file__).replace('modules/autoComplete.py')
-                path = os.path.join(path, 'res/icons/' + icon_names[_type.lower()] + '.svg')
+                path = os.path.abspath(__file__).replace('modules/autoComplete.py', '')
+                path = os.path.join(path, 'resources/icons/' + icon_names[_type.lower()] + '.svg')
                 print(path)
-                a = GdkPixbuf.Pixbuf.new_from_file_at_size(path, 16, 16)
+                a = GdkPixbuf.Pixbuf.new_from_file_at_scale(path, 16, 16, True)
+                print(type(a))
                 return a
         except:
             try:

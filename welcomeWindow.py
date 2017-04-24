@@ -146,9 +146,10 @@ class WelcomeWindow(Gtk.Window):
         self.hb.pack_start(a)
 
         b = Gtk.Button('Create')
-        b.connect('clicked', self.createProject)
-        self.hbButtons.append(b)
-        self.hb.pack_end(b)
+        self.createButton = b
+        self.createButton.connect('clicked', self.createProject)
+        self.hbButtons.append(self.createButton)
+        self.hb.pack_end(self.createButton)
 
         self.show_all()
 
@@ -170,8 +171,9 @@ int main(int argv, const char **argc)
 }
 '''
             hasMakefile = True
-            makefile = '''gcc -o out *.c
-./out
+            makefile = '''all:
+        gcc -o out *.c
+        ./out
 '''
         elif self.language == 'cpp':
             text = '''#include <iostream>
@@ -188,8 +190,9 @@ int main(int argc, char const *argv[])
 '''
 
             hasMakefile = True
-            makefile = '''g++ -o out *.cpp
-./out
+            makefile = '''all:
+        g++ -o out *.cpp
+        ./out
 '''
         elif self.language == 'py':
             text = '''
@@ -199,7 +202,8 @@ int main(int argc, char const *argv[])
 print("Hello World\\n")
 '''
             hasMakefile = True
-            makefile = '''python3 main.py
+            makefile = '''all:
+        python3 main.py
 '''
         else:
             return
@@ -213,6 +217,7 @@ print("Hello World\\n")
 
     def getLang(self, *args):
         self.language = 'c' if self.cLang.get_active() else 'cpp' if self.cppLang.get_active() else 'py' if self.pyLang.get_active() else 'other'
+        self.createButton.get_style_context().add_class('suggested-action')
 
     def openProject(self, *args):
         dialog = Gtk.FileChooserDialog('Select a project folder', self, Gtk.FileChooserAction.SELECT_FOLDER,(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
