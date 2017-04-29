@@ -15,6 +15,7 @@ from pygit2 import Repository
 from compiler import Compiler
 from modules.autoBracket import AutoBracket
 from modules.autoComplete import GediPlugin
+from modules.linter import Linter
 
 wW = __import__('welcomeWindow')
 
@@ -26,9 +27,9 @@ def isImageFile(fn):
     msg = subprocess.Popen(["file", fn], stdout=subprocess.PIPE).communicate()[0]
     return 'image' in str(msg)
 
-def nth_split(s, delim, n): 
+def nth_split(s, delim, n):
     p, c = -1, 0
-    while c < n:  
+    while c < n:
         p = s.index(delim, p + 1)
         c += 1
     return s[:p], s[p + 1:]
@@ -344,6 +345,8 @@ class IDEWindow(Gtk.Window):
         self.modules.append(self.autoBracket)
         self.autoComplete = GediPlugin(self)
         self.modules.append(self.autoComplete)
+        self.linter = Linter(self)
+        self.modules.append(self.linter)
 
         for module in self.modules:
             module.do_activate()
@@ -383,13 +386,16 @@ class IDEWindow(Gtk.Window):
             if unsaved:
                 res = self.confirm('{} is not saved, are you sure you want to exit without saving?'.format(os.path.basename(f['path'])))
                 if res:
+                    self.linter.do_deactivate()
                     Gtk.main_quit()
                 else:
                     return True
             else:
+                self.linter.do_deactivate()
                 Gtk.main_quit()
 
         else:
+            self.linter.do_deactivate()
             Gtk.main_quit()
 
     def onToggleDark(self, *args):
@@ -585,9 +591,9 @@ class IDEWindow(Gtk.Window):
             fileSystemTreeView.set_property('activate-on-single-click', True)
             fileSystemTreeView.set_property('show-expanders', True)
             fileSystemTreeView.set_property('enable-search', True)
-            
 
-            
+
+
 
             # Create a TreeViewColumn
             treeViewCol = Gtk.TreeViewColumn(self.projectName)
@@ -608,8 +614,8 @@ class IDEWindow(Gtk.Window):
             fileSystemTreeView.connect("row-expanded", self.onRowExpanded)
             # add "on collapse" callback
             fileSystemTreeView.connect("row-collapsed", self.onRowCollapsed)
-            
-            
+
+
             # add "on row selected" callback
             self.selectedRow = fileSystemTreeView.get_selection()
             self.selectedRow.connect('changed', self.onRowActivated)
@@ -686,13 +692,14 @@ class IDEWindow(Gtk.Window):
                 if not os.path.isdir(os.path.realpath(os.path.join(self.projectPath, model[row][0]))):
                     self.openFile(os.path.realpath(os.path.join(self.projectPath, model[row][0])))
                     self.autoComplete.on_document_load()
+                    self.linter.on_document_load()
                 else:
                     exp = self.sideScroller.get_child().row_expanded(model.get_path(row))
                     if not exp:
                         self.sideScroller.get_child().expand_row(model.get_path(row), False)
                     else:
                         self.sideScroller.get_child().collapse_row(model.get_path(row))
-                
+
             else:
                 # print(row)
                 # print(model)
@@ -711,6 +718,7 @@ class IDEWindow(Gtk.Window):
                 if not os.path.isdir(os.path.realpath(os.path.join(self.projectPath, p))):
                     self.openFile(os.path.realpath(os.path.join(self.projectPath, p)))
                     self.autoComplete.on_document_load()
+                    self.linter.on_document_load()
                 else:
                     exp = self.sideScroller.get_child().row_expanded(model.get_path(row))
                     if not exp:
@@ -719,7 +727,7 @@ class IDEWindow(Gtk.Window):
                         self.sideScroller.get_child().collapse_row(model.get_path(row))
 
             self.languageLbl.set_text('Language: {}'.format(self.sbuff.get_language().get_name() if not self.sbuff.get_language() is None else "Plain"))
-                
+
 
         else:
             print('None')
@@ -802,7 +810,6 @@ class IDEWindow(Gtk.Window):
                 break
 
         if found:
-            self.compileBtn.set_sensitive
             self.curFileIndex = index
             f = self.filesObject[self.curFileIndex]
             # print(f)
@@ -826,7 +833,7 @@ class IDEWindow(Gtk.Window):
 
                 # if not lang:
                 #     if os.path.basename(filePath).lower() == 'makefile':
-                #         lang = 
+                #         lang =
 
                 self.filesObject.append({
                     'type': 'file',
@@ -840,7 +847,7 @@ class IDEWindow(Gtk.Window):
                 self.hb.set_subtitle(filePath)
 
                 self.sbuff.set_text(txt)
-                
+
                 # self.langs[self.curFileIndex] = lang
                 self.currentLanguage = lang
                 self.sbuff.set_language(lang)
@@ -919,7 +926,7 @@ class IDEWindow(Gtk.Window):
         response = dialogWindow.run()
         dialogWindow.destroy()
         return (response == Gtk.ResponseType.OK)
-        
+
 
 
     def compile(self, *args):
@@ -928,7 +935,7 @@ class IDEWindow(Gtk.Window):
             ##
             self.comp._quit()
         else:
-            
+
             self.comp = Compiler(self, self.projectPath, self.stateEntry, self.compileBtn)
             self.comp.compile()
 

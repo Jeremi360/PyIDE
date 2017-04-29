@@ -2,21 +2,24 @@
 
 PyIDE is a basic IDE for Linux written in Python3 + Gtk3. Initially it was inspired on Visual Sutdio for Mac's design.
 
-__Status:__ Works as a code editor, now I'm focusing on IDE features
+__Status:__ Works great as a code editor, IDE tools are still being implemented.
+
+__Note for this commit:__ This commit might be broken due to my lack of knowledge in processes.
 
 Right now it looks something like this:
 
-![](pyide-preview.png)
+![](IDE.jpg)
 
 ## How to use
 
-As I said on the description, it only supports Linux and Mac, but as I don't have a Mac I'll only provide support for Linux.
+### On Linux
 
-These were the only dependencies I had to install on a fresh installed Ubuntu distro:
+These were the only dependencies I had to install on a fresh installed Ubuntu Gnome distro:
 * libwebkitgtk-3.0-dev
 * libgtksourceview-3.0-dev
 * python3-pygit2
 * python3-jedi
+* clang
 
 Running the IDE:
 
@@ -28,19 +31,17 @@ Running the IDE:
   python3 main.py /path/to/FOLDER
 ```
 
-\*Quick launcher removed
+### On Mac
 
-__As I don't own a set of file icons, you must have a decent icon theme installed and set as default in order to PyIDE work, otherwise it will crash!__
+I'm sorry I don't own a Mac, but if you have the necessary packages installed it should be the same process as Linux.
 
 ## Features
 
-* Basic syntax highlighting
-* Opening and saving files
+* Syntax highlighting
 * Code completion for Python, and a retarded code completion for other languages
-* Compile/Build/Run system
-* Basic update on-the-go settings
+* Compile/Build/Run "system"
 * Integrated terminal
-* Dark mode
+* Simple UI customization
 
 ## To-do
 
@@ -55,21 +56,16 @@ __As I don't own a set of file icons, you must have a decent icon theme installe
 
 ## Recent Updates
 
-* Searching for Minimap bug workarround
-* Gedi Gedit plugin ported to PyIDE (see the original repo [here](https://github.com/isamert/gedi))
-* Create file and folder functions were implemented
+* Linter module added
+* Working on linting for C/C++
 
 ## Known Issues
 
-* ~~Create a project doesn't work~~
-* ~~Compile doesn't work for old projects~~
-* ~~Create new file and create new folder buttons don't work~~
-* ~~No confirm exit even with unsaved modified files~~
-* ~~Can't open files inside folders~~
 * Markdown previewer is broken
+* Linter sometimes keeps the process on after PyIDE is closed
 
-## FAQ
+## Notes
 
-What theme is that?
+Thmes that you might see on the preview picture: Adwaita, Numix and Arc Flatabulous.
 
-Themes that might be on the picture: Numix, Arc Flatabulous, Adwaita.
+Python code completion was created by [isamert](https://github.com/isamert) check out the original code [here](https://github.com/isamert/gedi).
