@@ -4,7 +4,7 @@ PyIDE is a basic IDE for Linux written in Python3 + Gtk3. Initially it was inspi
 
 __Status:__ Works great as a code editor, IDE tools are still being implemented.
 
-__Note for this commit:__ This commit might be broken due to my lack of knowledge in processes.
+__Note for this commit:__ This commit __seems__ to be stable.
 
 Right now it looks something like this:
 
@@ -56,13 +56,18 @@ I'm sorry I don't own a Mac, but if you have the necessary packages installed it
 
 ## Recent Updates
 
+New:
+* Fixed linter keeping process awake
+
+Old:
+
 * Linter module added
 * Working on linting for C/C++
 
 ## Known Issues
 
 * Markdown previewer is broken
-* Linter sometimes keeps the process on after PyIDE is closed
+* ~~Linter sometimes keeps the process on after PyIDE is closed~~
 
 ## Notes
 

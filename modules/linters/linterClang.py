@@ -7,9 +7,9 @@ from threading import Timer
 
 class LinterClang:
 
-    def __init__(self, parent, curFile):
+    def __init__(self, parent):
         self.parent = parent
-        self.curFile = curFile
+        self.curFile = None
 
         # Activate Linting on file saved
         self.activateOnSave = False
@@ -20,18 +20,18 @@ class LinterClang:
         # Live linting delay
         self.liveDelay = 2.0
 
-        dir_util.copy_tree(self.parent.projectPath, '/tmp/pyidetmp')
-
         self.task = None
 
         self.errors = 0
         self.fileChanged = True
 
+        self.enabled = False
+
     def do_live_linting(self, *args):
 
-        print('Lint called and: {}'.format(self.fileChanged))
+        print('Lint called and: {}, has file? {}'.format(self.fileChanged, self.curFile is not None))
 
-        if self.fileChanged:
+        if self.fileChanged and self.curFile is not None:
 
             self.fileChanged = False
 
@@ -71,8 +71,14 @@ class LinterClang:
         self.task = Timer(self.liveDelay, self.do_live_linting)
         self.task.start()
 
+    def set_file(self, _file=None):
+        self.curFile = _file
+
     def do_activate(self, *args):
+
         print('LinterClang activated')
+        self.enabled = True
+        dir_util.copy_tree(self.parent.projectPath, '/tmp/pyidetmp')
 
         if self.live:
             self.connection = self.parent.sbuff.connect('changed', self.set_file_changed)
@@ -81,9 +87,12 @@ class LinterClang:
     def do_deactivate(self, *args):
         if not self.task is None:
             self.task.cancel()
-            if not self.connection is None:
-                self.parent.sbuff.disconnect(self.connection)
-                self.connection = None
+        if not self.connection is None:
+            self.parent.sbuff.disconnect(self.connection)
+            self.connection = None
+
+        print('LinterClang deactivated')
+        self.enabled = False
 
     def __del__(self, *args):
         self.do_deactivate()
