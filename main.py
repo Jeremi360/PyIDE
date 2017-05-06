@@ -7,7 +7,7 @@ gi.require_version('Gdk', '3.0')
 gi.require_version('GtkSource', '3.0')
 gi.require_version('WebKit', '3.0')
 gi.require_version('Vte', '2.91')
-from gi.repository import Gtk, Gdk,GtkSource, Vte, GLib, WebKit
+from gi.repository import Gtk, Gdk,GtkSource, Vte, GLib, WebKit, Pango
 from gi.repository.GdkPixbuf import Pixbuf
 from os import listdir
 from os.path import isfile, join
@@ -34,6 +34,21 @@ def nth_split(s, delim, n):
         c += 1
     return s[:p], s[p + 1:]
 
+def human_format(num):
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    # add more suffixes if you need them
+    res = '%.2f%s' % (num, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
+    if res.split('.')[1][0:len(res.split('.')[1])-1] == '00':
+        res = res.replace('.00', '')
+    elif res.split('.')[1][1:len(res.split('.')[1])-1] == '0':
+        res = res[:len(res) - 2] + res[(len(res)-1):]
+    elif res[len(res) - 2:] == '00':
+        res = res.replace('.00', '')
+    return res
+
 class IDEWindow(Gtk.Window):
     """docstring for IDEWindow."""
     def __init__(self, openPath):
@@ -54,6 +69,7 @@ class IDEWindow(Gtk.Window):
         accel = Gtk.AccelGroup()
         accel.connect(Gdk.keyval_from_name('s'), Gdk.ModifierType.CONTROL_MASK, 0, self.saveFile)
         accel.connect(Gdk.keyval_from_name('b'), Gdk.ModifierType.CONTROL_MASK, 0, self.compile)
+        accel.connect(Gdk.keyval_from_name('f'), Gdk.ModifierType.CONTROL_MASK, 0, self.toggleSearch)
         # accel.connect(16777215, Gdk.ModifierType.SHIFT_MASK, 0, self.bracketComplete)
         #accel.connect(Gdk.keyval_from_name('p'), Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK, 0, self.command) #future Ctrl + Shift + P command popup
         self.add_accel_group(accel)
@@ -141,6 +157,21 @@ class IDEWindow(Gtk.Window):
         r.set_margin_left(5)
         r.set_margin_right(5)
         self.settingsList.insert(r, -1)
+        
+        r = Gtk.ListBoxRow()
+        _hb = Gtk.HBox()
+        _hb.get_style_context().add_class('linked')
+        self.styleChooserButton = GtkSource.StyleSchemeChooserButton()
+        self.applyStyleButton = Gtk.Button.new_from_icon_name('emblem-ok-symbolic', Gtk.IconSize.MENU)
+        self.applyStyleButton.connect('clicked', self.applyStyle)
+        _hb.pack_start(self.styleChooserButton, True, True, 0)
+        _hb.pack_start(self.applyStyleButton, True, True, 0)
+        r.add(_hb)
+        r.set_margin_left(5)
+        r.set_margin_right(5)
+        r.set_margin_bottom(5)
+        self.settingsList.insert(r, -1)
+        
 
         r = Gtk.ListBoxRow()
         _hb = Gtk.HBox()
@@ -192,14 +223,15 @@ class IDEWindow(Gtk.Window):
         self.hb.set_title('Py IDE')
         self.hb.set_show_close_button(True)
 
-        self.searchEntry = Gtk.Entry()
-        self.searchEntry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, 'system-search')
         #self.hb.pack_end(self.searchEntry)
 
         ## Views And Buffers
 
         self.sview = GtkSource.View()
-        self.sbuff = GtkSource.Buffer()
+        self.stable = Gtk.TextTagTable()
+        self.sbuff = GtkSource.Buffer.new(self.stable)
+        self.found_tag = self.sbuff.create_tag('found-tag', background='rgba(200,200,200,.8)')
+        self.error_tag = self.sbuff.create_tag('error-tag', underline=Pango.Underline.ERROR)
         self.lmngr = GtkSource.LanguageManager()
         self.sviewScroll = Gtk.ScrolledWindow()
         self.sviewBox = Gtk.HBox()
@@ -214,6 +246,8 @@ class IDEWindow(Gtk.Window):
         self.sview.set_left_margin(10)
         self.sview.set_property('smart-home-end', GtkSource.SmartHomeEndType.ALWAYS)
         self.sview.set_smart_backspace(True)
+        font = Pango.FontDescription('Monospace 10')
+        self.sview.modify_font(font)
         # self.sview.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.sview.set_tab_width(8)
         # self.sview.set_hscroll_policy(Gtk.ScrollablePolicy.MINIMAL)
@@ -306,16 +340,51 @@ class IDEWindow(Gtk.Window):
 
         #####################################
 
+        self.searchToolbar = Gtk.Revealer()
+        self.searchToolbar.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN)
+        self.searchToolbar.set_transition_duration(300)
+
+        self.searchEntry = Gtk.Entry()
+        self.searchEntry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, 'preferences-system-search-symbolic')
+        self.searchEntry.connect('changed', self.find)
+        self.searchEntry.set_width_chars(50)
+
+        self.searchFindButton = Gtk.Button('Find')
+        self.searchFindButton.connect('clicked', self.find)
+
+        self.searchCloseButton = Gtk.Button.new_from_icon_name('window-close-symbolic', Gtk.IconSize.MENU)
+        self.searchCloseButton.connect('clicked', self.toggleSearch)
+
+        self.searchVBox = Gtk.HBox()
+
+        bx = Gtk.HBox()
+        bx.pack_start(self.searchEntry, False, False, 0)
+        bx.pack_start(self.searchFindButton, False, False, 0)
+        bx.set_halign(Gtk.Align.CENTER)
+        
+
+        self.searchVBox.add(bx)
+        self.searchVBox.pack_end(self.searchCloseButton, False, False, 0)
+
+        self.searchToolbar.add(self.searchVBox)
+        self.searchToolbar.set_reveal_child(False)
+
+        #####################################
+
         # SVIEWSCROLL EVENTS
 
-        self.sviewScroll.connect('event-after', self.sviewScrollEvents)
+        #self.sviewScroll.connect('event-after', self.sviewScrollEvents)
 
-        self.sviewScroll.connect('scroll-child', self.updateMinimap)
+        #self.sviewScroll.connect('scroll-child', self.updateMinimap)
         self.sviewScroll.add(self.sview)
         self.sviewBox.pack_start(self.sviewScroll, True, True, 0)
+
         self.sviewBox.pack_start(self.smap, False, False, 0)
 
         ##########################################
+
+        self.searchPane = Gtk.VBox()
+
         self.sviewPaned = Gtk.Paned()
         self.sviewPaned.pack1(self.sviewBox, False, False)
         self.sviewPaned.pack2(self.mdPreviewer)
@@ -325,7 +394,10 @@ class IDEWindow(Gtk.Window):
         self.terminalPane.pack1(self.sviewPaned, True, True) ##################
         self.terminalPane.add2(self.terminal)
 
-        self.pane.add2(self.terminalPane)
+        self.searchPane.pack_start(self.searchToolbar, False, False, 0)
+        self.searchPane.pack_start(self.terminalPane, True, True, 0)
+
+        self.pane.add2(self.searchPane)
 
         self.add(self.pane)
         self.set_titlebar(self.hb)
@@ -397,6 +469,30 @@ class IDEWindow(Gtk.Window):
         else:
             self.linter.do_deactivate()
             Gtk.main_quit()
+            
+    def applyStyle(self, *args):
+        self.sbuff.set_style_scheme(self.styleChooserButton.get_style_scheme())
+
+    def find(self, *args):
+
+        self.sbuff.remove_tag(self.found_tag, self.sbuff.get_start_iter(), self.sbuff.get_end_iter())
+        text = self.searchEntry.get_text()
+        start = self.sbuff.get_start_iter()
+        
+
+        self.markFound(text, start)
+
+    
+    def markFound(self, text, start):
+        end = self.sbuff.get_end_iter()
+
+        match = start.forward_search(text, 0, end)
+
+        if match != None:
+            match_start, match_end = match
+            self.sbuff.apply_tag(self.found_tag, match_start, match_end)
+            self.markFound(text, match_end)
+
 
     def onToggleDark(self, *args):
         if self.autoToggling:
@@ -443,7 +539,7 @@ class IDEWindow(Gtk.Window):
             txt = ' Lines'
         else:
             txt = ' Line'
-        self.lines.set_label(str(self.sbuff.get_line_count()) + txt)
+        self.lines.set_label(str(human_format(self.sbuff.get_line_count())) + txt)
         self.linesLbl.set_text('Lines: {}'.format(self.sbuff.get_line_count()))
         self.charsLbl.set_text('Chars: {}'.format(str(self.sbuff.get_char_count())))
 
@@ -458,6 +554,14 @@ class IDEWindow(Gtk.Window):
             self.terminal.hide()
         else:
             self.terminal.show()
+
+    def toggleSearch(self, *args):
+        self.searchToolbar.set_reveal_child(not self.searchToolbar.get_reveal_child())
+        if self.searchToolbar.get_reveal_child():
+            self.searchEntry.grab_focus()
+        else:
+            self.sbuff.remove_tag(self.found_tag, self.sbuff.get_start_iter(), self.sbuff.get_end_iter())
+            self.sview.grab_focus()
 
     def onSettingsBtnClick(self, *args):
         self.settingsPopover.show_all()
